@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RE-START Programmation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:wght@600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ── Charte RE-START ── */
+  --bg: #0B0B0C;
+  --surface: #141416;
+  --surface2: #1C1C1F;
+  --border: #2B2B30;
+  --text: #EFE7D6;          /* crème */
+  --muted: #8A8477;
+  --danger: #C25562;
+  --accent: #C25562;        /* bordeaux clair — texte / bordures */
+  --accent-deep: #7B2028;   /* bordeaux profond — fonds */
+  --green: #1E3A33;         /* vert charte */
+  --green-lt: #3E6B5C;
+  --cream: #EFE7D6;
+  /* bloc colors */
+  --sbd:     #4a9eff;
+  --halte:   #f5a623;
+  --muscu:   #4adf8a;
+  --cardio:  #bf5af2;
+  --hyrox:   #c0601a;
+  --etire:   #e84d8a;
+  --sbd-bg:    rgba(74,158,255,0.08);
+  --halte-bg:  rgba(245,166,35,0.08);
+  --muscu-bg:  rgba(74,223,138,0.08);
+  --cardio-bg: rgba(191,90,242,0.08);
+  --hyrox-bg:  rgba(192,96,26,0.08);
+  --etire-bg:  rgba(232,77,138,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  overscroll-behavior: none;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #0A0A0A;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 10px;
+}
+/* ── LOGO RE-START ── */
+.logo-wrap {
+  display: flex; align-items: baseline;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 21px; line-height: 1;
+  color: var(--cream); letter-spacing: -0.5px;
+}
+.logo-txt { font-size: 1em; line-height: 1; }
+/* Le repère fait exactement la hauteur de capitale de la police (unité `cap`)
+   et s'aligne sur la ligne de base : haut et bas collent au R quelle que soit la police. */
+.logo-mark {
+  display: inline-block; position: relative;
+  width: .78em;
+  height: .72em;          /* repli si `cap` non supporté */
+  height: 1cap;           /* hauteur de capitale exacte */
+  flex-shrink: 0;
+  margin: 0 .40em 0 .14em;
+}
+/* 3 barres horizontales — le E stylisé (26% + 11% d'écart = 100%) */
+.logo-mark i {
+  position: absolute; left: -.14em;
+  width: 1.02em; height: 26%;
+  background: var(--cream);
+  transform: skewX(18deg);
+}
+.logo-mark i:nth-child(1) { top: 0; }
+.logo-mark i:nth-child(2) { top: 37%; }
+.logo-mark i:nth-child(3) { top: 74%; }
+/* barre diagonale */
+.logo-bar {
+  position: absolute; top: -13%; left: .29em;
+  width: .19em; height: 126%;
+  background: var(--accent-deep);
+  transform: skewX(18deg);
+  z-index: 1;
+}
+.logo-sub {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+  font-size: 8px; color: var(--muted); letter-spacing: 1.2px;
+  text-transform: uppercase; margin-top: 2px;
+}
+.header-btns { display: flex; gap: 6px; }
+.btn-header {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+.btn-excel { background: var(--accent-deep); color: var(--cream); }
+.btn-pdf   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-save  { background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer; }
+.btn-load  { background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+
+/* ── ACCORDION ── */
+.section { border-bottom: 1px solid var(--border); }
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; cursor: pointer; background: var(--surface); user-select: none;
+}
+.section-head-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+.arrow { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+.section-head.open .arrow { transform: rotate(180deg); }
+.section-body { display: none; padding: 16px; background: var(--bg); }
+.section-body.open { display: block; }
+
+/* ── FIELDS ── */
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+input[type="text"], input[type="number"], select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 12px; border-radius: 6px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
+  appearance: none; -webkit-appearance: none;
+}
+input:focus, select:focus { border-color: var(--accent); }
+select option { background: #1a1d25; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── PR TABLE ── */
+.pr-section-title {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 8px 0 6px; margin-top: 12px;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.pr-section-title.sbd   { color: var(--sbd); }
+.pr-section-title.halte { color: var(--halte); }
+.pr-table { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+.pr-row { display: grid; grid-template-columns: 1fr 90px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+.pr-row:last-child { border-bottom: none; }
+.pr-row.sbd   { border-left: 2px solid var(--sbd); }
+.pr-row.halte { border-left: 2px solid var(--halte); }
+.pr-name { font-size: 12px; line-height: 1.3; }
+.pr-name small { display: block; color: var(--muted); font-size: 10px; }
+.pr-input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px;
+  padding: 6px 8px; border-radius: 4px; width: 100%; text-align: right; outline: none;
+}
+.pr-input:focus { border-color: var(--accent); }
+
+/* ── WEEK TABS ── */
+.week-tabs {
+  display: flex; overflow-x: auto; padding: 10px 16px; gap: 8px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.week-tabs::-webkit-scrollbar { display: none; }
+.week-tab {
+  flex-shrink: 0; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 7px 14px; border-radius: 4px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer;
+}
+.week-tab.active {
+  border-color: var(--accent-deep); color: var(--cream);
+  background: var(--accent-deep); font-weight: 700;
+}
+.week-add {
+  flex-shrink: 0; background: transparent; border: 1px dashed var(--border);
+  color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer;
+  padding: 5px 13px; border-radius: 4px; font-family: 'DM Sans', sans-serif;
+}
+.week-add:active { border-color: var(--accent); color: var(--accent); }
+
+/* ── ÉTAT VIDE / CRÉER PROGRAMME ── */
+.btn-create {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent-deep); border: none; color: var(--cream);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 17px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 15px; border-radius: 6px; cursor: pointer;
+}
+.btn-create:active { background: #6A1B22; }
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--muted);
+}
+.empty-state .es-title {
+  font-family: 'Archivo Black', sans-serif; font-size: 15px;
+  color: var(--text); margin-bottom: 8px; letter-spacing: -0.3px;
+}
+.empty-state .es-sub { font-size: 13px; line-height: 1.5; margin-bottom: 22px; }
+
+/* ── AJOUTER UN JOUR ── */
+/* ── INDICATEUR DE SAUVEGARDE ── */
+.saved-flag {
+  position: fixed; top: 10px; right: 12px; z-index: 400;
+  background: var(--green); color: var(--cream);
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 20px;
+  opacity: 0; transform: translateY(-6px);
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+}
+.saved-flag.show { opacity: .92; transform: translateY(0); }
+
+/* ── ONGLETS SECTIONS ── */
+.sec-tabs {
+  display: flex; overflow-x: auto; padding: 10px 14px; gap: 7px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.sec-tabs::-webkit-scrollbar { display: none; }
+.sec-tab {
+  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 14px; letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 8px 14px; border-radius: 5px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer;
+  max-width: 210px; white-space: nowrap;
+}
+.sec-tab.active {
+  border-color: var(--green-lt); color: var(--cream);
+  background: var(--green); 
+}
+.sec-tab .sec-label { overflow: hidden; text-overflow: ellipsis; }
+.sec-tab .sec-menu {
+  font-size: 15px; line-height: 1; opacity: .75;
+  padding: 0 1px; flex-shrink: 0;
+}
+.sec-add {
+  flex-shrink: 0; background: transparent; border: 1px dashed var(--border);
+  color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer;
+  padding: 7px 14px; border-radius: 5px; font-family: 'DM Sans', sans-serif;
+}
+.sec-add:active { border-color: var(--accent); color: var(--accent); }
+
+/* Champs de la modale section */
+.sec-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 12px; border-radius: 6px;
+  font-size: 15px; outline: none; margin-bottom: 12px;
+  font-family: 'DM Sans', sans-serif;
+}
+.sec-input:focus { border-color: var(--accent); }
+.sec-move-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.sec-btn {
+  padding: 13px; border-radius: 8px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 14px; letter-spacing: 1.2px; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--border); color: var(--text);
+}
+.sec-btn:disabled { opacity: .3; cursor: default; }
+.sec-btn-danger { border-color: var(--danger); color: var(--danger); }
+
+/* ── ONGLETS JOURS ── */
+.day-tabs {
+  display: flex; overflow-x: auto; padding: 8px 14px; gap: 6px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex-shrink: 0; font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase; padding: 7px 13px;
+  border-radius: 4px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer;
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.day-tab.active {
+  border-color: var(--cream); color: var(--bg);
+  background: var(--cream); font-weight: 700;
+}
+.day-add {
+  flex-shrink: 0; background: transparent; border: 1px dashed var(--border);
+  color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer;
+  padding: 5px 12px; border-radius: 4px; font-family: 'DM Sans', sans-serif;
+}
+.day-add:active { border-color: var(--accent); color: var(--accent); }
+
+.btn-add-day {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 4px 14px 20px; padding: 14px;
+  background: transparent; border: 1px dashed var(--border);
+  border-radius: 8px; color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase;
+  cursor: pointer; width: calc(100% - 28px);
+}
+.btn-add-day:active { border-color: var(--accent); color: var(--accent); }
+
+/* ── DAY CARD ── */
+.day-card { margin: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.day-header { display: flex; align-items: center; gap: 8px; padding: 10px 8px 10px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); border-left: 3px solid var(--accent-deep); }
+.day-label {
+  font-family: 'Archivo Black', sans-serif; font-size: 14px;
+  letter-spacing: 0.5px; color: var(--cream); flex-shrink: 0;
+}
+.day-name-input {
+  background: transparent; border: none; border-bottom: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace;
+  padding: 3px 4px; flex: 1; min-width: 0; outline: none; text-align: right;
+}
+.day-name-input:focus { border-color: var(--accent); color: var(--text); }
+.day-del {
+  background: transparent; border: none; color: var(--muted);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  padding: 0 2px 3px; flex-shrink: 0; width: 30px;
+}
+.day-del:active { color: var(--danger); }
+
+/* ── EXERCISE CARD ── */
+.ex-card { margin: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.ex-card.bloc-sbd    { border-left: 3px solid var(--sbd);    background: var(--sbd-bg); }
+.ex-card.bloc-halte  { border-left: 3px solid var(--halte);  background: var(--halte-bg); }
+.ex-card.bloc-muscu  { border-left: 3px solid var(--muscu);  background: var(--muscu-bg); }
+.ex-card.bloc-cardio { border-left: 3px solid var(--cardio); background: var(--cardio-bg); }
+.ex-card.bloc-hyrox  { border-left: 3px solid var(--hyrox);  background: var(--hyrox-bg); }
+.ex-card.bloc-etire  { border-left: 3px solid var(--etire);  background: var(--etire-bg); }
+
+.ex-top { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.bloc-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.15s;
+}
+.bloc-dot:active { transform: scale(1.4); }
+.bloc-dot.bloc-sbd    { background: var(--sbd); }
+.bloc-dot.bloc-halte  { background: var(--halte); }
+.bloc-dot.bloc-muscu  { background: var(--muscu); }
+.bloc-dot.bloc-cardio { background: var(--cardio); }
+.bloc-dot.bloc-hyrox  { background: var(--hyrox); }
+.bloc-dot.bloc-etire  { background: var(--etire); }
+
+.ex-name-wrap { flex: 1; position: relative; min-width: 0; }
+.ex-name-input {
+  background: transparent; border: none; color: var(--text);
+  font-size: 14px; font-weight: 600; width: 100%; outline: none; padding: 2px 0;
+}
+.ex-name-input::placeholder { color: var(--muted); font-weight: 400; }
+.browse-btn { background: transparent; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.browse-btn:active { color: var(--accent); }
+.del-btn { background: transparent; border: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+.del-btn:active { color: var(--danger); }
+
+/* grid: sets reps rpe % charge */
+.ex-grid { display: grid; grid-template-columns: repeat(5,1fr); border-bottom: 1px solid var(--border); }
+.ex-cell { padding: 5px 6px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.ex-cell:last-child { border-right: none; }
+.cell-lbl { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.cell-sel {
+  background: transparent; border: none; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 13px; padding: 0;
+  outline: none; width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer;
+}
+.cell-charge-input {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--accent);
+  font-family: 'DM Mono', monospace; font-size: 14px;
+  padding: 5px 6px; outline: none; width: 100%; font-weight: 600;
+  min-height: 30px;
+}
+.cell-charge-input:focus { border-color: var(--accent); background: rgba(194,85,98,0.10); }
+.cell-charge-input::placeholder { color: var(--muted); font-size: 11px; }
+.cell-load-auto { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); font-weight: 500; padding-top: 1px; }
+
+.ex-note-row { padding: 6px 10px; }
+.ex-note-input { background: transparent; border: none; color: var(--muted); font-size: 12px; width: 100%; outline: none; font-style: italic; }
+.ex-note-input::placeholder { color: #2a2d35; }
+.ex-note-input:focus { color: var(--text); }
+.ex-conseil-input { background: transparent; border: none; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; width: 100%; outline: none; font-style: italic; padding: 5px 10px; }
+.ex-conseil-input::placeholder { color: #2a2d35; }
+.ex-conseil-input:focus { color: var(--accent); }
+.unit-select { background: transparent; border: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; padding: 0 1px; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; text-align: center; }
+
+.btn-add-ex {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin: 8px; padding: 9px; background: transparent; border: 1px dashed var(--border);
+  border-radius: 6px; color: var(--muted); font-size: 11px;
+  font-family: 'DM Mono', monospace; letter-spacing: 1px; cursor: pointer;
+  width: calc(100% - 16px);
+}
+.btn-add-ex:active { border-color: var(--accent); color: var(--accent); }
+.bottom-pad { height: 80px; }
+/* ── SUB ROWS ── */
+.sub-rows { border-top: 1px solid var(--border); }
+.sub-row {
+  display: grid;
+  grid-template-columns: 0.8fr 0.8fr 0.8fr 0.9fr 1.7fr 26px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  align-items: center;
+}
+.sub-row:last-child { border-bottom: none; }
+.sub-cell { padding: 5px 6px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.sub-cell:last-child { border-right: none; padding: 0; display: flex; align-items: center; justify-content: center; }
+.sub-cell .cell-sel, .sub-cell .cell-charge-input { font-size: 12px; }
+.btn-add-subrow {
+  background: transparent; border: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; line-height: 1; padding: 2px 4px;
+}
+.btn-add-subrow:active { color: var(--accent); }
+.btn-del-subrow {
+  background: transparent; border: none; color: var(--muted);
+  font-size: 14px; cursor: pointer; line-height: 1;
+}
+.btn-del-subrow:active { color: var(--danger); }
+
+
+/* ── BLOC PICKER MODAL ── */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: flex-end; }
+.modal.open { display: flex; }
+.modal-sheet { width: 100%; background: var(--surface); border-radius: 16px 16px 0 0; padding: 20px 16px 36px; }
+.modal-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 14px; }
+.bloc-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.bloc-opt {
+  padding: 14px 10px; border-radius: 8px; border: 1px solid; text-align: center;
+  cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+}
+.bloc-opt.sbd    { border-color: var(--sbd);    color: var(--sbd);    background: var(--sbd-bg); }
+.bloc-opt.halte  { border-color: var(--halte);  color: var(--halte);  background: var(--halte-bg); }
+.bloc-opt.muscu  { border-color: var(--muscu);  color: var(--muscu);  background: var(--muscu-bg); }
+.bloc-opt.cardio { border-color: var(--cardio); color: var(--cardio); background: var(--cardio-bg); }
+.modal-cancel { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; cursor: pointer; margin-top: 4px; }
+
+/* ── EXERCISE BROWSER MODAL ── */
+.browser-modal { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; flex-direction: column; }
+.browser-modal.open { display: flex; }
+.browser-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.browser-search {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 10px 14px; border-radius: 8px; font-size: 15px; outline: none; font-family: 'DM Sans', sans-serif;
+}
+.browser-search:focus { border-color: var(--accent); }
+.browser-close { background: transparent; border: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0 4px; }
+.browser-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
+.browser-bloc-title {
+  padding: 10px 16px 6px; font-family: 'Archivo Black', sans-serif; font-size: 14px; letter-spacing: 0.5px;
+  position: sticky; top: 0; z-index: 1;
+}
+.browser-bloc-title.sbd    { color: var(--sbd);    background: var(--bg); border-bottom: 1px solid var(--sbd); }
+.browser-bloc-title.halte  { color: var(--halte);  background: var(--bg); border-bottom: 1px solid var(--halte); }
+.browser-bloc-title.muscu  { color: var(--muscu);  background: var(--bg); border-bottom: 1px solid var(--muscu); }
+.browser-bloc-title.cardio { color: var(--cardio); background: var(--bg); border-bottom: 1px solid var(--cardio); }
+.browser-bloc-title.hyrox  { color: var(--hyrox);  background: var(--bg); border-bottom: 1px solid var(--hyrox); }
+.browser-bloc-title.etire  { color: var(--etire);  background: var(--bg); border-bottom: 1px solid var(--etire); }
+.browser-sub-title { padding: 10px 16px 5px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); background: var(--surface); }
+.browser-ex {
+  padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+  font-size: 13px; transition: background 0.1s; display: flex; align-items: center; gap: 8px;
+  background: var(--bg); color: var(--text);
+}
+.browser-ex:active { background: var(--surface2); }
+.browser-ex-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.browser-ex-dot.sbd    { background: var(--sbd); }
+.browser-ex-dot.halte  { background: var(--halte); }
+.browser-ex-dot.muscu  { background: var(--muscu); }
+.browser-ex-dot.cardio { background: var(--cardio); }
+.browser-ex-dot.hyrox  { background: var(--hyrox); }
+.browser-ex-dot.etire  { background: var(--etire); }
+
+/* ── EXCEL WEEK CHECKS ── */
+.week-check-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px; cursor: pointer;
+}
+.week-check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.week-check-item span { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--text); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--accent); color: #0a0b0e;
+  padding: 11px 26px; border-radius: 50px; font-weight: 600; font-size: 13px;
+  opacity: 0; transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1); z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-wrap">
+      <span class="logo-txt">R</span><span class="logo-mark"><i></i><i></i><i></i><span class="logo-bar"></span></span><span class="logo-txt">START</span>
+    </div>
+    <div class="logo-sub">Programmation</div>
+  </div>
+  <div class="header-btns">
+    <button class="btn-header btn-save" onclick="saveJSON()" title="Sauvegarder le programme">💾</button>
+    <label class="btn-header btn-load" title="Charger un programme">
+      📂<input type="file" accept=".json" onchange="loadJSON(event)" style="display:none">
+    </label>
+    <button class="btn-header btn-pdf" onclick="generatePDF()">PDF</button>
+    <button class="btn-header btn-excel" onclick="openExcelModal()">EXCEL</button>
+  </div>
+</header>
+
+<!-- GÉNÉRAL -->
+<div class="section">
+  <div class="section-head open" onclick="toggleSection(this)">
+    <span class="section-head-title">Général</span><span class="arrow">▼</span>
+  </div>
+  <div class="section-body open">
+    <div class="field"><label>Nom du programme</label><input type="text" id="prog-name" placeholder="Ex : Bloc Force S1–S6"></div>
+    <div class="field"><label>Athlète / Client</label><input type="text" id="athlete" placeholder="Nom"></div>
+    <button class="btn-create" id="btn-create-prog" onclick="createProgram()">+ Créer un programme</button>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px">
+        Ton programme est enregistré automatiquement sur cet appareil.
+        Utilise l'export JSON pour le sauvegarder ailleurs ou le transférer.
+      </div>
+      <button onclick="clearAutosave()" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Effacer le programme enregistré</button>
+    </div>
+  </div>
+</div>
+
+<!-- 1RM -->
+<div class="section">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-head-title">1RM — SBD & Haltérophilie</span><span class="arrow">▼</span>
+  </div>
+  <div class="section-body" id="pr-body"></div>
+</div>
+
+<!-- WEEK TABS -->
+<div class="saved-flag" id="saved-flag">Enregistré</div>
+<div class="sec-tabs" id="sec-tabs"></div>
+<div class="week-tabs" id="week-tabs"></div>
+<div class="day-tabs" id="day-tabs"></div>
+
+<!-- DAYS -->
+<div id="days-container"></div>
+<div class="bottom-pad"></div>
+
+<!-- BLOC PICKER -->
+<div class="modal" id="bloc-modal" onclick="closeBlocModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Type d'exercice</div>
+    <div class="bloc-options">
+      <div class="bloc-opt sbd"    onclick="pickBloc('sbd')">🔵 SBD</div>
+      <div class="bloc-opt halte"  onclick="pickBloc('halte')">🟡 Haltérophilie</div>
+      <div class="bloc-opt muscu"  onclick="pickBloc('muscu')">🟢 Musculation</div>
+      <div class="bloc-opt cardio" onclick="pickBloc('cardio')">🟣 Cardio</div>
+      <div class="bloc-opt hyrox"  onclick="pickBloc('hyrox')" style="border-color:var(--hyrox);color:var(--hyrox);background:var(--hyrox-bg)">🟤 Hyrox</div>
+      <div class="bloc-opt etire"  onclick="pickBloc('etire')"  style="border-color:var(--etire);color:var(--etire);background:var(--etire-bg)">🩷 Étirements</div>
+    </div>
+    <button class="modal-cancel" onclick="closeBlocModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- EXCEL WEEK SELECTOR -->
+<div class="modal" id="excel-modal" onclick="closeExcelModal(event)">
+  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-title">Semaines à exporter</div>
+    <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
+      <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
+      <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
+    </div>
+    <button onclick="doGenerateExcel()" style="width:100%;background:var(--accent-deep);border:none;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:2px;padding:12px;border-radius:8px;cursor:pointer;margin-bottom:8px">EXPORTER</button>
+    <button class="modal-cancel" onclick="closeExcelModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- NOUVELLE SEMAINE -->
+<div class="modal" id="week-modal" onclick="closeWeekModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Nouvelle semaine</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+      <button onclick="addWeek(true)" style="background:var(--accent-deep);border:none;color:var(--cream);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer" id="btn-copy-week">Copier la semaine précédente</button>
+      <button onclick="addWeek(false)" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Créer une semaine vide</button>
+    </div>
+    <button class="modal-cancel" onclick="closeWeekModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- GESTION D'UNE SECTION -->
+<div class="modal" id="sec-modal" onclick="closeSecModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Section</div>
+    <input class="sec-input" type="text" id="sec-name-input" placeholder="Nom de la section…" maxlength="40">
+    <div class="sec-move-row">
+      <button class="sec-btn" id="sec-move-left"  onclick="moveSection(-1)">← Déplacer</button>
+      <button class="sec-btn" id="sec-move-right" onclick="moveSection(1)">Déplacer →</button>
+    </div>
+    <button class="sec-btn sec-btn-danger" id="sec-delete" onclick="deleteSection()" style="width:100%;margin-bottom:10px">Supprimer cette section</button>
+    <button class="modal-cancel" onclick="applySecName()">Terminé</button>
+  </div>
+</div>
+
+<!-- NOUVEAU JOUR -->
+<div class="modal" id="day-modal" onclick="closeDayModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Nouveau jour</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+      <button onclick="addDay(true)" style="background:var(--accent-deep);border:none;color:var(--cream);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer" id="btn-copy-day">Copier le jour actif</button>
+      <button onclick="addDay(false)" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Créer un jour vide</button>
+    </div>
+    <button class="modal-cancel" onclick="closeDayModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- EXERCISE BROWSER -->
+<div class="browser-modal" id="browser-modal">
+  <div class="browser-header">
+    <input class="browser-search" type="text" placeholder="Rechercher un exercice…" oninput="filterBrowser(this.value)" id="browser-search">
+    <button class="browser-close" onclick="closeBrowser()">✕</button>
+  </div>
+  <div class="browser-body" id="browser-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATABASE
+// ═══════════════════════════════════════════════════
+const DB = {
+  sbd: {
+    label: 'SBD',
+    color: 'sbd',
+    exercises: [
+      {n:'Squat (Squat arrière)'},
+      {n:'Bench Press (Développé couché)'},
+      {n:'Deadlift (Soulevé de terre)'},
+      {n:'Squat Tempo'},
+      {n:'Belt Squat (Squat ceinture)'},
+      {n:'Front Squat (Squat avant)'},
+      {n:'Bench 2ct'},
+      {n:'Bench 3ct'},
+      {n:'Bench Larsen'},
+      {n:'Bench Close Grip (Développé prise serrée)'},
+      {n:'Halt Deadlift (Soulevé de terre arrêt)'},
+      {n:'Dead Tempo'},
+      {n:'Pause Squat (Squat pause)'},
+      {n:'Pin Squat (Squat sur chandelles)'},
+      {n:'Box Squat (Squat sur boîte)'},
+      {n:'Romanian Deadlift (Soulevé de terre roumain)'},
+      {n:'Rack Pull (Tirage sur rack)'},
+      {n:'Deficit Deadlift (Soulevé de terre en déficit)'},
+      {n:'Stiff Leg Deadlift (SDT jambes tendues)'},
+      {n:'Slingshot Bench'},
+      {n:'Board Press'},
+      {n:'Floor Press (Développé au sol)'},
+      {n:'Incline Bench Press (Développé incliné)'},
+      {n:'Spoto Press'},
+    ]
+  },
+  halte: {
+    label: 'Haltérophilie',
+    color: 'halte',
+    exercises: [
+      {n:'Snatch (Arraché)'},
+      {n:'Clean & Jerk (Épaulé-jeté)'},
+      {n:'Power Clean (Épaulé de force)'},
+      {n:'Power Snatch (Arraché de force)'},
+      {n:'Hang Clean (Épaulé suspendu)'},
+      {n:'Hang Snatch (Arraché suspendu)'},
+      {n:'Push Jerk (Jeté poussé)'},
+      {n:'Split Jerk (Jeté fendu)'},
+      {n:'Clean Pull (Tirage épaulé)'},
+      {n:'Snatch Pull (Tirage arraché)'},
+      {n:'Overhead Squat (Squat au-dessus de la tête)'},
+      {n:'Muscle Snatch (Arraché musculaire)'},
+      {n:'Hang Power Clean (Épaulé de force suspendu)'},
+      {n:'Hang Power Snatch (Arraché de force suspendu)'},
+      {n:'Clean High Pull (Tirage haut épaulé)'},
+      {n:'Snatch Balance (Équilibre arraché)'},
+      {n:'Jerk Dip (Fléchissement jeté)'},
+      {n:'Power Jerk (Jeté de force)'},
+    ]
+  },
+  muscu: {
+    label: 'Musculation',
+    color: 'muscu',
+    subs: {
+      'Dos': [
+        'Traction','Tractions lestées','Rowing haltère','Rowing barre','Tirage poulie haute',
+        'Tirage horizontal','T-Bar Row','Rowing soutenu poitrine','Tirage nuque','Shrugs',
+        'Pendlay Row','Face Pull','Écartement élastique','Rowing menton','Traction prise serrée',
+        'Traction prise neutre','Tirage poulie basse','Tirage unilatéral poulie',
+      ],
+      'Pecs': [
+        'Développé couché haltères','Développé incliné haltères','Développé décliné',
+        'Écarté haltères','Écarté poulie','Pompes lestées','Dips pecs','Cable Fly',
+        'Développé convergent machine','Peck Deck','Crossover poulie',
+      ],
+      'Épaules': [
+        'Développé militaire barre','Développé militaire haltères','Élévations latérales',
+        'Élévations frontales','Oiseau','Arnold Press','Élévations latérales poulie',
+        'Élévations frontales poulie','Face Pull épaules','Développé Arnold machine',
+      ],
+      'Bras': [
+        'Curl barre','Curl haltères','Curl marteau','Curl poulie','Curl incliné haltères',
+        'Curl concentration','Curl araignée','Triceps poulie','Triceps barre (Skullcrusher)',
+        'Dips triceps','Extension triceps haltère','Extension triceps poulie haute',
+        'Extension triceps unilatéral','Triceps barre Z',
+      ],
+      'Jambes': [
+        'Fente bulgare','Fente marchée','Fente statique','Hack squat machine',
+        'Leg Press (Presse à cuisses)','Leg Extension (Extension quadriceps)',
+        'Leg Curl couché','Leg Curl assis','Nordic Curl','Mollets debout','Mollets assis',
+        'Good Morning','Saut sur boîte','Presse à cuisses unilatérale','Fente avant haltères',
+      ],
+      'Fessier / Hanche': [
+        'Hip Thrust (Poussée de hanches)','Glute Ham Raise (Extension fessier-ischio)',
+        'Abducteur machine','Adducteur machine','Hyperextension inversée',
+        'Soulevé de terre roumain unilatéral','Kick-back fessier poulie',
+        'Abduction hanche debout','Hip Thrust unilatéral','Leg Press fessier',
+        'Clamshell','Résistance élastique hanche',
+      ],
+      'Corps': [
+        'Planche','Planche latérale','Gainage dynamique','Crunch','Crunch oblique',
+        'Relevé de buste','Relevé de jambes allongé','Relevé de jambes suspendu',
+        'Pieds à la barre','Genou au coude suspendu','Roue abdominale','Dragon Flag',
+        'Hollow Hold','Oiseau-Chien','Dead Bug','Russian Twist','L-Sit',
+        'Pallof Press','Marche du fermier','Extension lombaire','Hyperextension',
+        'Superman','Pompes','Pompes diamant','Pompes larges',
+      ],
+    }
+  },
+  cardio: {
+    label: 'Cardio',
+    color: 'cardio',
+    exercises: [
+      {n:'Treadmill (Tapis de course)'},
+      {n:'Assault Bike (Vélo assault)'},
+      {n:'Bike (Vélo)'},
+      {n:'Rower (Rameur)'},
+      {n:'Stairmaster (Monte-escalier)'},
+      {n:'Sled Push (Poussée de traîneau)'},
+      {n:'Sled Pull (Tirage de traîneau)'},
+      {n:'Ski Erg'},
+      {n:'Battle Rope (Cordes ondulatoires)'},
+      {n:'Jump Rope (Corde à sauter)'},
+      {n:'Marche rapide'},
+      {n:'Sprint'},
+    ]
+  },
+  hyrox: {
+    label: 'Hyrox',
+    color: 'hyrox',
+    exercises: [
+      {n:'Ski Erg'},
+      {n:'Sled Push (Poussée de traîneau)'},
+      {n:'Sled Pull (Tirage de traîneau)'},
+      {n:'Burpee Broad Jump (Burpee saut en longueur)'},
+      {n:'Rowing 1000m'},
+      {n:'Farmers Carry (Marche du fermier)'},
+      {n:'Sandbag Lunges (Fentes sac de sable)'},
+      {n:'Wall Balls'},
+      {n:'Run 1km'},
+      {n:'Kettlebell Swings (Balancements kettlebell)'},
+      {n:'Box Jump (Saut sur boîte)'},
+      {n:'Bear Crawl (Marche de l’ours)'},
+      {n:'Assault Bike 10min'},
+      {n:'Tire Flip (Retournement de pneu)'},
+      {n:'Slam Ball'},
+      {n:'Battle Rope (Cordes ondulatoires)'},
+    ]
+  },
+  etire: {
+    label: 'Étirements',
+    color: 'etire',
+    subs: {
+      'Hanche': ['Pigeon','Fente basse hip flexor','Étirement fessier en croix','90/90 hanche','Scorpion','Figure 4'],
+      'Dos': ['Enfant (dos complet)','Chat-vache','Cobra (lombaires)','Torsion dorsale allongée','Ouverture thoracique','Rouleau lombaires','Étirement dos en croix'],
+      'Bassin': ['Papillon (adducteurs)','Étirement ischio assis','Étirement ischio debout','Inclinaison du bassin','Pont fessier étirement'],
+      'Épaules / Omoplate': ['Étirement pectoraux au mur','Étirement épaule croisée','Ouverture épaules au sol','Bras derrière le dos','Rétraction omoplate','Étirement omoplate en T','Wall Slide (Glissé au mur)','Dislocate élastique'],
+      'Nuque': ['Étirement cervicaux latéral','Étirement cervicaux avant','Rotation cervicale','Étirement trapèzes','Chin Tuck (Rentrée du menton)'],
+      'Cheville': ['Étirement mollet debout','Solaire (mollet assis)','Flexion dorsale cheville au mur','Rotation cheville','Étirement plantaire'],
+    }
+  }
+};
+
+// flatten for autocomplete
+const ALL_EX = [];
+Object.entries(DB).forEach(([bloc, data]) => {
+  if (data.exercises) data.exercises.forEach(e => ALL_EX.push({name: e.n, bloc}));
+  if (data.subs) Object.values(data.subs).forEach(arr => arr.forEach(n => ALL_EX.push({name: n, bloc})));
+});
+
+// 1RM exercises (SBD + halte base names)
+const RM_EXERCISES = [
+  ...DB.sbd.exercises.map(e=>e.n),
+  ...DB.halte.exercises.map(e=>e.n)
+];
+
+const RM_DEFAULTS = {
+  'Squat (Squat arrière)': 170,
+  'Bench Press (Développé couché)': 135,
+  'Deadlift (Soulevé de terre)': 270,
+  'Squat Tempo': 175,
+  'Belt Squat (Squat ceinture)': 130,
+  'Front Squat (Squat avant)': 140,
+  'Bench 2ct': 130,
+  'Bench 3ct': 127.5,
+  'Bench Larsen': 115,
+  'Bench Close Grip (Développé prise serrée)': 110,
+  'Halt Deadlift (Soulevé de terre arrêt)': 220,
+  'Dead Tempo': 230,
+  'Snatch (Arraché)': 80,
+  'Clean & Jerk (Épaulé-jeté)': 100,
+  'Power Clean (Épaulé de force)': 90,
+  'Power Snatch (Arraché de force)': 70,
+};
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+// ── SECTIONS ──
+// Chaque section est un programme autonome : ses semaines, ses jours, son contenu.
+// sections[i] = { name, weeks, dayNames }
+let sections      = [];
+let activeSection = 0;
+
+// weekData / dayNames pointent toujours vers la section active.
+// weekData[w][d] = tableau d'exercices   |   dayNames[w][d] = nom du jour
+let weekData = [];
+let dayNames = [];
+let activeWeek = 0;
+let activeDay  = 0;
+
+// Recopie les pointeurs dans la section active (après toute réassignation complète)
+function syncToSection() {
+  if (!sections[activeSection]) return;
+  sections[activeSection].weeks    = weekData;
+  sections[activeSection].dayNames = dayNames;
+}
+// Charge une section dans les pointeurs de travail
+function loadSection(i) {
+  if (!sections[i]) return;
+  activeSection = i;
+  weekData = sections[i].weeks;
+  dayNames = sections[i].dayNames;
+  activeWeek = 0;
+  activeDay  = 0;
+}
+function newSection(name) {
+  return { name: name || '', weeks: [[ newDay() ]], dayNames: [['']] };
+}
+function hasSections() { return sections.length > 0; }
+function sectionLabel(i) {
+  const n = sections[i] && sections[i].name ? sections[i].name.trim() : '';
+  return n || `Section ${i+1}`;
+}
+let pendingBlocCard = null;
+let pendingBrowserCard = null;
+
+// ── Helpers structure dynamique ──
+function nWeeks()      { return weekData.length; }
+function nDaysOf(w)    { return (weekData[w] || []).length; }
+function getDayName(w,d){ return (dayNames[w] && dayNames[w][d]) || ''; }
+function hasProgram()  { return sections.length > 0 && weekData.length > 0; }
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  renderPRSection();
+  const restored = restoreAutosave();
+  renderSecTabs();
+  renderTabs();
+  renderDayTabs();
+  renderDays();
+  updateEmptyState();
+  buildBrowserFull();
+  autosaveReady = true;
+  if (restored) showToast('Programme restaur\u00e9');
+}
+
+// ═══════════════════════════════════════════════════
+//  PR SECTION
+// ═══════════════════════════════════════════════════
+function renderPRSection() {
+  const body = document.getElementById('pr-body');
+  body.innerHTML = '';
+
+  ['sbd','halte'].forEach(bloc => {
+    const data = DB[bloc];
+    const title = document.createElement('div');
+    title.className = `pr-section-title ${bloc}`;
+    title.textContent = data.label;
+    body.appendChild(title);
+
+    const table = document.createElement('div');
+    table.className = 'pr-table';
+    data.exercises.forEach(ex => {
+      const row = document.createElement('div');
+      row.className = `pr-row ${bloc}`;
+      const parts = ex.n.split('(');
+      const main = parts[0].trim();
+      const sub  = parts[1] ? parts[1].replace(')','').trim() : '';
+      row.innerHTML = `
+        <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
+        <input class="pr-input" type="number" id="pr-${eid(ex.n)}" value="${RM_DEFAULTS[ex.n]||''}" placeholder="kg" inputmode="decimal" oninput="onPRChange()">`;
+      table.appendChild(row);
+    });
+    body.appendChild(table);
+  });
+}
+
+// Un 1RM modifié → recalcule toutes les charges auto non saisies manuellement
+function onPRChange() {
+  document.querySelectorAll('.ex-card').forEach(c => refreshLoad(c));
+}
+
+function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
+function getPR(name){
+  const el = document.getElementById('pr-'+eid(name));
+  return el ? parseFloat(el.value)||0 : 0;
+}
+
+// ═══════════════════════════════════════════════════
+//  ACCORDION
+// ═══════════════════════════════════════════════════
+function toggleSection(head) {
+  head.classList.toggle('open');
+  head.nextElementSibling.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════
+//  WEEK / DAY MANAGEMENT
+// ═══════════════════════════════════════════════════
+// Un jour neuf = 1 carte d'exercice vide
+function newDay() {
+  return [{exercise:'',bloc:'muscu',sets:'3',reps:'10',rpe:'7',pct:'',charge:'',unit:'kg',note:'',conseil:''}];
+}
+
+// ── CRÉER UN PROGRAMME ──
+function createProgram() {
+  sections      = [ newSection('') ];
+  activeSection = 0;
+  loadSection(0);
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays(); updateEmptyState();
+  doAutosave();
+  showToast('✓ Programme créé');
+}
+
+function updateEmptyState() {
+  const btn = document.getElementById('btn-create-prog');
+  if (btn) btn.style.display = hasProgram() ? 'none' : 'flex';
+}
+
+// ── JOURS ──
+function openDayModal() {
+  if (!hasProgram()) return;
+  const btn = document.getElementById('btn-copy-day');
+  if (btn) {
+    const ok = nDaysOf(activeWeek) > 0;
+    btn.textContent = ok ? `Copier le jour DAY ${activeDay+1}` : 'Copier le jour actif';
+    btn.style.display = ok ? 'block' : 'none';
+  }
+  document.getElementById('day-modal').classList.add('open');
+}
+function closeDayModal(e) {
+  if (!e || e.target === document.getElementById('day-modal')) {
+    document.getElementById('day-modal').classList.remove('open');
+  }
+}
+
+function addDay(copyCurrent) {
+  if (!hasProgram()) return;
+  saveState();
+  if (!dayNames[activeWeek]) dayNames[activeWeek] = [];
+
+  if (copyCurrent && weekData[activeWeek][activeDay]) {
+    weekData[activeWeek].push(JSON.parse(JSON.stringify(weekData[activeWeek][activeDay])));
+    dayNames[activeWeek].push(getDayName(activeWeek, activeDay));
+  } else {
+    weekData[activeWeek].push(newDay());
+    dayNames[activeWeek].push('');
+  }
+
+  activeDay = nDaysOf(activeWeek) - 1;
+  document.getElementById('day-modal').classList.remove('open');
+  renderDayTabs(); renderDays();
+  doAutosave();
+}
+
+function deleteDay(d) {
+  if (!hasProgram()) return;
+  saveState();
+  const day = weekData[activeWeek][d] || [];
+  const hasContent = day.some(ex => (ex.exercise||'').trim() !== '');
+  if (hasContent && !confirm(`Supprimer DAY ${d+1} et tous les exercices qu'il contient ?`)) return;
+  weekData[activeWeek].splice(d,1);
+  if (dayNames[activeWeek]) dayNames[activeWeek].splice(d,1);
+  if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
+  renderDayTabs(); renderDays();
+  doAutosave();
+}
+
+// ── SEMAINES ──
+function renderTabs() {
+  const el = document.getElementById('week-tabs');
+  if (!hasProgram()) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML =
+    weekData.map((_,i)=>`<button class="week-tab${i===activeWeek?' active':''}" onclick="switchWeek(${i})">W${i+1}</button>`).join('')
+    + `<button class="week-add" onclick="openWeekModal()" title="Ajouter une semaine">+</button>`;
+}
+
+function switchWeek(i){
+  saveState();
+  activeWeek = i;
+  if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
+  renderTabs(); renderDayTabs(); renderDays();
+}
+
+// ═══════════════════════════════════════════════════
+//  SECTIONS
+// ═══════════════════════════════════════════════════
+function renderSecTabs() {
+  const el = document.getElementById('sec-tabs');
+  if (!el) return;
+  if (!hasSections()) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  let html = '';
+  sections.forEach((_, i) => {
+    const act = i === activeSection;
+    html += `<button class="sec-tab${act?' active':''}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
+          + `<span class="sec-label">${sectionLabel(i)}</span>`
+          + (act ? `<span class="sec-menu" onclick="event.stopPropagation();openSecModal()">⋯</span>` : '')
+          + `</button>`;
+  });
+  html += `<button class="sec-add" onclick="addSection()" title="Ajouter une section">+</button>`;
+  el.innerHTML = html;
+}
+
+function switchSection(i) {
+  if (i === activeSection) return;
+  saveState(); syncToSection();
+  loadSection(i);
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays();
+}
+
+function addSection() {
+  saveState(); syncToSection();
+  sections.push(newSection(''));
+  loadSection(sections.length - 1);
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
+  showToast('✓ Section ajoutée');
+}
+
+function openSecModal() {
+  if (!hasSections()) return;
+  const input = document.getElementById('sec-name-input');
+  if (input) input.value = sections[activeSection].name || '';
+  const l = document.getElementById('sec-move-left');
+  const r = document.getElementById('sec-move-right');
+  const d = document.getElementById('sec-delete');
+  if (l) l.disabled = activeSection === 0;
+  if (r) r.disabled = activeSection === sections.length - 1;
+  if (d) d.style.display = sections.length > 1 ? 'block' : 'none';
+  document.getElementById('sec-modal').classList.add('open');
+}
+
+function closeSecModal(e) {
+  if (!e || e.target === document.getElementById('sec-modal')) applySecName();
+}
+
+function applySecName() {
+  const input = document.getElementById('sec-name-input');
+  if (input && sections[activeSection]) sections[activeSection].name = input.value.trim();
+  document.getElementById('sec-modal').classList.remove('open');
+  renderSecTabs();
+}
+
+function moveSection(dir) {
+  saveState(); syncToSection();      // fige la saisie en cours avant de déplacer
+  applySecName();
+  const j = activeSection + dir;
+  if (j < 0 || j >= sections.length) return;
+  const tmp = sections[activeSection];
+  sections[activeSection] = sections[j];
+  sections[j] = tmp;
+  activeSection = j;
+  renderSecTabs();
+  showToast('✓ Section déplacée');
+}
+
+function deleteSection() {
+  if (sections.length <= 1) return;
+  saveState(); syncToSection();
+  const label = sectionLabel(activeSection);
+  const vide  = sections[activeSection].weeks.every(w => w.every(d => d.every(ex => !(ex.exercise||'').trim())));
+  if (!vide && !confirm(`Supprimer la section « ${label} » et tout son contenu ?`)) return;
+  sections.splice(activeSection, 1);
+  document.getElementById('sec-modal').classList.remove('open');
+  loadSection(Math.max(0, activeSection - 1));
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
+  showToast('✓ Section supprimée');
+}
+
+// ── ONGLETS JOURS ──
+function renderDayTabs() {
+  const el = document.getElementById('day-tabs');
+  if (!el) return;
+  if (!hasProgram()) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  const nD = nDaysOf(activeWeek);
+  let html = '';
+  for (let d = 0; d < nD; d++) {
+    const dn = getDayName(activeWeek, d);
+    const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
+  }
+  html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
+  el.innerHTML = html;
+}
+
+function switchDay(d) {
+  saveState();
+  activeDay = d;
+  renderDayTabs(); renderDays();
+}
+
+function openWeekModal() {
+  const copyBtn = document.getElementById('btn-copy-week');
+  if (copyBtn) {
+    const ok = hasProgram() && weekData[activeWeek];
+    copyBtn.textContent = ok ? `Copier la semaine W${activeWeek+1}` : 'Copier la semaine active';
+    copyBtn.style.display = ok ? 'block' : 'none';
+  }
+  document.getElementById('week-modal').classList.add('open');
+}
+function closeWeekModal(e) {
+  if (!e || e.target === document.getElementById('week-modal')) {
+    document.getElementById('week-modal').classList.remove('open');
+  }
+}
+
+function addWeek(copyPrev) {
+  saveState();
+  const src = activeWeek;                    // on copie la semaine ACTIVE
+  if (copyPrev && weekData[src]) {
+    weekData.push(JSON.parse(JSON.stringify(weekData[src])));
+    dayNames.push([...(dayNames[src] || [])]);
+  } else {
+    weekData.push([ newDay() ]);
+    dayNames.push(['']);
+  }
+  activeWeek = weekData.length - 1;
+  activeDay  = 0;
+  document.getElementById('week-modal').classList.remove('open');
+  renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════
+//  SAVE STATE
+// ═══════════════════════════════════════════════════
+function saveState() {
+  if (!weekData[activeWeek]) return;
+  const nD = nDaysOf(activeWeek);
+  // Un seul jour est affiché à la fois : on ne sauvegarde que celui-ci,
+  // sinon les jours absents du DOM seraient écrasés par un tableau vide.
+  const shown = [activeDay].filter(d => d >= 0 && d < nD);
+  for (const d of shown) {
+    const cards = document.querySelectorAll(`.ex-card[data-day="${d}"]`);
+    if (!document.getElementById(`exlist-${d}`)) continue;  // jour non rendu
+    weekData[activeWeek][d] = Array.from(cards).map(c => {
+      const subRowEls = c.querySelectorAll('.sub-row');
+      const subRows = Array.from(subRowEls).map(sr => ({
+        sets:  sr.querySelector('.sel-sets').value,
+        reps:  sr.querySelector('.sel-reps').value,
+        rpe:   sr.querySelector('.sel-rpe').value,
+        pct:   sr.querySelector('.sel-pct').value,
+        charge: sr.querySelector('.cell-charge-input') ? sr.querySelector('.cell-charge-input').value : '',
+        unit:   sr.querySelector('.unit-select') ? sr.querySelector('.unit-select').value : 'kg',
+        chargeUserEdited: sr.querySelector('.load-auto') ? !!sr.querySelector('.load-auto').dataset.userEdited : false,
+      }));
+      return {
+        exercise: c.querySelector('.ex-name-input').value,
+        bloc:     c.dataset.bloc,
+        sets:     subRows[0]?.sets || '',
+        reps:     subRows[0]?.reps || '',
+        rpe:      subRows[0]?.rpe  || '',
+        pct:      subRows[0]?.pct  || '',
+        charge:   subRows[0]?.charge || '',
+        unit:     subRows[0]?.unit || 'kg',
+        chargeUserEdited: subRows[0]?.chargeUserEdited || false,
+        note:     c.querySelector('.ex-note-input').value,
+        conseil:  c.querySelector('.ex-conseil-input') ? c.querySelector('.ex-conseil-input').value : '',
+        subRows,
+      };
+    });
+  }
+  // Noms des jours — propres à la semaine active, seul le jour affiché est relu
+  if (!dayNames[activeWeek]) dayNames[activeWeek] = [];
+  dayNames[activeWeek].length = nD;
+  for (let i = 0; i < nD; i++) {
+    const el = document.getElementById(`dn-${i}`);
+    dayNames[activeWeek][i] = el ? el.value : (dayNames[activeWeek][i] || '');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER DAYS
+// ═══════════════════════════════════════════════════
+function renderDays() {
+  const cont = document.getElementById('days-container');
+  cont.innerHTML = '';
+
+  // État vide — aucun programme
+  if (!hasProgram()) {
+    cont.innerHTML = `
+      <div class="empty-state">
+        <div class="es-title">Aucun programme en cours</div>
+        <div class="es-sub">Crée un programme pour commencer.<br>Tu ajouteras ensuite tes jours et tes semaines librement.</div>
+        <button class="btn-create" onclick="createProgram()">+ Créer un programme</button>
+      </div>`;
+    return;
+  }
+
+  const nD = nDaysOf(activeWeek);
+
+  // Aucun jour dans cette semaine
+  if (nD === 0) {
+    cont.innerHTML = `
+      <div class="empty-state">
+        <div class="es-title">Aucun jour dans cette semaine</div>
+        <div class="es-sub">Ajoute un premier jour pour commencer \u00e0 programmer.</div>
+        <button class="btn-create" onclick="openDayModal()">+ Ajouter un jour</button>
+      </div>`;
+    return;
+  }
+
+  if (activeDay >= nD) activeDay = nD - 1;
+  const d   = activeDay;
+  const exs = weekData[activeWeek][d] || [];
+  const dn  = getDayName(activeWeek, d);
+
+  const card = document.createElement('div');
+  card.className = 'day-card';
+  card.innerHTML = `
+    <div class="day-header">
+      <span class="day-label">DAY ${d+1}</span>
+      <input class="day-name-input" type="text" placeholder="Squat / Upper…" id="dn-${d}" value="${dn}" oninput="onDayNameInput()">
+      <button class="day-del" onclick="deleteDay(${d})" title="Supprimer ce jour">×</button>
+    </div>
+    <div class="ex-list" id="exlist-${d}"></div>
+    <button class="btn-add-ex" onclick="addEx(${d})">＋ Ajouter exercice</button>`;
+  cont.appendChild(card);
+  exs.forEach(ex => appendExCard(d, ex));
+
+  const add = document.createElement('button');
+  add.className = 'btn-add-day';
+  add.textContent = '+ Ajouter un jour';
+  add.onclick = openDayModal;
+  cont.appendChild(add);
+}
+
+// Le nom du jour est repris en direct dans l'onglet correspondant
+function onDayNameInput() {
+  const el = document.getElementById(`dn-${activeDay}`);
+  if (!el) return;
+  if (!dayNames[activeWeek]) dayNames[activeWeek] = [];
+  dayNames[activeWeek][activeDay] = el.value;
+  const tabs = document.querySelectorAll('#day-tabs .day-tab');
+  const tab  = tabs[activeDay];
+  if (tab) {
+    const label = el.value ? `DAY ${activeDay+1} · ${el.value}` : `DAY ${activeDay+1}`;
+    tab.textContent = label;
+    tab.title = label;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  EXERCISE CARD
+// ═══════════════════════════════════════════════════
+function appendExCard(dayIdx, ex) {
+  const list = document.getElementById(`exlist-${dayIdx}`);
+  const card = document.createElement('div');
+  const bloc = ex.bloc || 'muscu';
+  card.className = `ex-card bloc-${bloc}`;
+  card.dataset.day  = dayIdx;
+  card.dataset.bloc = bloc;
+
+  const isAutoLoad = (bloc === 'sbd' || bloc === 'halte');
+  const load = isAutoLoad ? computeAutoLoad(ex) : '';
+  const dlId = `dl-${dayIdx}-${Math.random().toString(36).slice(2,8)}`;
+
+  // Build first sub-row (main row)
+  const subRows = ex.subRows && ex.subRows.length > 0 ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
+
+  card.innerHTML = `
+    <div class="ex-top">
+      <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
+      <div class="ex-name-wrap">
+        <input class="ex-name-input" list="${dlId}" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
+          oninput="onExNameInput(this)">
+        <datalist id="${dlId}">${ALL_EX.map(e=>`<option value="${e.name}">`).join('')}</datalist>
+      </div>
+      <button class="browse-btn" onclick="openBrowser(this.closest('.ex-card'))">🔍</button>
+      <button class="del-btn" onclick="this.closest('.ex-card').remove()">×</button>
+    </div>
+    <div class="sub-rows" id="subrows-${dlId}"></div>
+    <div class="ex-note-row"><input class="ex-note-input" type="text" placeholder="Ressenti, notes…" value="${ex.note||''}"></div>
+    <input class="ex-conseil-input" type="text" placeholder="Conseil technique…" value="${ex.conseil||''}">`;
+
+  list.appendChild(card);
+
+  // Render sub-rows
+  const subContainer = card.querySelector('.sub-rows');
+  subRows.forEach(sr => appendSubRow(subContainer, sr, bloc, isAutoLoad));
+}
+
+function addEx(dayIdx) {
+  appendExCard(dayIdx, {exercise:'',bloc:'muscu',sets:'3',reps:'10',rpe:'7',pct:'',charge:'',note:''});
+}
+
+// Construction unique de la cellule Charge (utilisée partout)
+function chargeCellHTML(bloc, sr, valueOverride) {
+  const isAuto = bloc==='sbd' || bloc==='halte';
+  const val    = valueOverride != null ? valueOverride : ((sr && sr.charge) || '');
+  const edited = (sr && sr.chargeUserEdited) ? 'data-user-edited="1"' : '';
+  return `<span class="cell-lbl">Charge</span>
+    <div style="display:flex;align-items:center;gap:2px">
+      <input class="cell-charge-input${isAuto?' load-auto':''}" type="text" inputmode="decimal"
+             placeholder="—" value="${val}" ${edited} style="flex:1;min-width:0"
+             ${isAuto?'oninput="onChargeManualEdit(this)"':''}>
+      <select class="unit-select" style="width:28px;flex-shrink:0">${unitOpts(bloc, (sr && sr.unit) || 'kg')}</select>
+    </div>`;
+}
+
+function appendSubRow(container, sr, bloc, isAutoLoad) {
+  const div = document.createElement('div');
+  div.className = 'sub-row';
+  const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
+  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
+  div.innerHTML = `
+    <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,sr.sets)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,sr.reps)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,sr.rpe)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts(sr.pct)}</select></div>
+    <div class="sub-cell">${chargeCellHTML(bloc, sr, chargeVal)}</div>
+    <div class="sub-cell">
+      <button class="btn-add-subrow" onclick="addSubRow(this)" title="Ajouter série">＋</button>
+      <button class="btn-del-subrow" onclick="delSubRow(this)" title="Supprimer">−</button>
+    </div>`;
+  container.appendChild(div);
+}
+
+function addSubRow(btn) {
+  const row = btn.closest('.sub-row');
+  const container = row.closest('.sub-rows');
+  const card = container.closest('.ex-card');
+  const bloc = card.dataset.bloc;
+  const isAutoLoad = bloc==='sbd'||bloc==='halte';
+  const newRow = {sets:'3',reps:'5',rpe:'7',pct:'',charge:''};
+  const div = document.createElement('div');
+  div.className = 'sub-row';
+  div.innerHTML = `
+    <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,newRow.sets)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,newRow.reps)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,newRow.rpe)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts('')}</select></div>
+    <div class="sub-cell">${chargeCellHTML(bloc, newRow, '')}</div>
+    <div class="sub-cell">
+      <button class="btn-add-subrow" onclick="addSubRow(this)">＋</button>
+      <button class="btn-del-subrow" onclick="delSubRow(this)">−</button>
+    </div>`;
+  row.insertAdjacentElement('afterend', div);
+}
+
+function delSubRow(btn) {
+  const container = btn.closest('.sub-rows');
+  if (container.querySelectorAll('.sub-row').length <= 1) return; // keep at least 1
+  btn.closest('.sub-row').remove();
+}
+
+function refreshSubLoad(sel) {
+  const row = sel.closest('.sub-row');
+  const card = row.closest('.ex-card');
+  const input = row.querySelector('.load-auto');
+  if (!input || input.dataset.userEdited) return;
+  const val = computeAutoLoad({
+    exercise: card.querySelector('.ex-name-input').value,
+    pct: sel.value,
+    bloc: card.dataset.bloc
+  });
+  if (val && val !== '—') input.value = val.replace(' kg','');
+}
+
+// ═══════════════════════════════════════════════════
+//  LOAD COMPUTE
+// ═══════════════════════════════════════════════════
+function computeAutoLoad(ex) {
+  if (!ex.exercise || !ex.pct) return '—';
+  const pr = getPR(ex.exercise);
+  if (!pr) return '—';
+  return (Math.round(pr * parseFloat(ex.pct) / 100 * 2) / 2) + ' kg';
+}
+
+function refreshLoad(card) {
+  // Refresh all sub-row auto loads when exercise name changes
+  card.querySelectorAll('.sub-row').forEach(row => {
+    const input = row.querySelector('.load-auto');
+    if (!input || input.dataset.userEdited) return;
+    const val = computeAutoLoad({
+      exercise: card.querySelector('.ex-name-input').value,
+      pct: row.querySelector('.sel-pct').value,
+      bloc: card.dataset.bloc
+    });
+    if (val && val !== '—') input.value = val.replace(' kg','');
+  });
+}
+
+function onChargeManualEdit(input) {
+  // Champ vidé → on relâche le verrou, le calcul auto reprend la main
+  if (input.value.trim() === '') delete input.dataset.userEdited;
+  else input.dataset.userEdited = '1';
+}
+
+function onExNameInput(input) {
+  const card = input.closest('.ex-card');
+  // auto-detect bloc from DB
+  const val = input.value.trim();
+  const found = ALL_EX.find(e => e.name.toLowerCase() === val.toLowerCase());
+  if (found && found.bloc !== card.dataset.bloc) {
+    updateCardBloc(card, found.bloc);
+  }
+  refreshLoad(card);
+}
+
+// ═══════════════════════════════════════════════════
+//  BLOC MODAL
+// ═══════════════════════════════════════════════════
+function openBlocModal(card){ pendingBlocCard=card; document.getElementById('bloc-modal').classList.add('open'); }
+function closeBlocModal(e){ if(!e||e.target===document.getElementById('bloc-modal')){ document.getElementById('bloc-modal').classList.remove('open'); pendingBlocCard=null; } }
+function pickBloc(bloc) {
+  if (!pendingBlocCard) return;
+  updateCardBloc(pendingBlocCard, bloc);
+  document.getElementById('bloc-modal').classList.remove('open');
+  pendingBlocCard = null;
+}
+
+function updateCardBloc(card, bloc) {
+  if (!card) return;
+  card.className = `ex-card bloc-${bloc}`;
+  card.dataset.bloc = bloc;
+  const dot = card.querySelector('.bloc-dot');
+  if (dot) dot.className = `bloc-dot bloc-${bloc}`;
+
+  // Reconstruit la cellule Charge de CHAQUE sous-ligne en gardant les valeurs
+  card.querySelectorAll('.sub-row').forEach(row => {
+    const cells = row.querySelectorAll('.sub-cell');
+    const cell  = cells[4];                 // 0:Sets 1:Reps 2:RPE 3:% 4:Charge
+    if (!cell) return;
+    const oldInput = row.querySelector('.cell-charge-input');
+    const oldUnit  = row.querySelector('.unit-select');
+    const cur = {
+      charge: oldInput ? oldInput.value : '',
+      unit:   oldUnit  ? oldUnit.value  : 'kg',
+      chargeUserEdited: oldInput ? !!oldInput.dataset.userEdited : false
+    };
+    cell.innerHTML = chargeCellHTML(bloc, cur, cur.charge);
+  });
+
+  refreshLoad(card);
+}
+
+// ═══════════════════════════════════════════════════
+//  BROWSER MODAL
+// ═══════════════════════════════════════════════════
+function buildBrowserFull() {
+  const body = document.getElementById('browser-body');
+  body.innerHTML = '';
+  Object.entries(DB).forEach(([bloc, data]) => {
+    const bt = document.createElement('div');
+    bt.className = `browser-bloc-title ${data.color}`;
+    bt.textContent = data.label;
+    bt.dataset.bloc = bloc;
+    body.appendChild(bt);
+
+    if (data.exercises) {
+      data.exercises.forEach(ex => {
+        body.appendChild(makeExRow(ex.n, bloc, data.color));
+      });
+    }
+    if (data.subs) {
+      Object.entries(data.subs).forEach(([sub, exs]) => {
+        const st = document.createElement('div');
+        st.className = 'browser-sub-title';
+        st.textContent = sub;
+        body.appendChild(st);
+        exs.forEach(n => body.appendChild(makeExRow(n, bloc, data.color)));
+      });
+    }
+  });
+}
+
+function makeExRow(name, bloc, color) {
+  const div = document.createElement('div');
+  div.className = 'browser-ex';
+  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${name}`;
+  div.onclick = () => selectExFromBrowser(name, bloc);
+  return div;
+}
+
+function openBrowser(card) {
+  pendingBrowserCard = card;
+  document.getElementById('browser-search').value = '';
+  buildBrowserFull();
+  document.getElementById('browser-modal').classList.add('open');
+}
+function closeBrowser() {
+  document.getElementById('browser-modal').classList.remove('open');
+  pendingBrowserCard = null;
+}
+function selectExFromBrowser(name, bloc) {
+  if (!pendingBrowserCard) return;
+  pendingBrowserCard.querySelector('.ex-name-input').value = name;
+  updateCardBloc(pendingBrowserCard, bloc);
+  refreshLoad(pendingBrowserCard);
+  closeBrowser();
+}
+function filterBrowser(q) {
+  const body = document.getElementById('browser-body');
+  body.innerHTML = '';
+  if (!q.trim()) { buildBrowserFull(); return; }
+  const ql = q.toLowerCase();
+  ALL_EX.filter(e => e.name.toLowerCase().includes(ql)).forEach(e => {
+    const color = DB[e.bloc].color;
+    body.appendChild(makeExRow(e.name, e.bloc, color));
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SELECT OPTIONS
+// ═══════════════════════════════════════════════════
+function unitOpts(bloc, sel) {
+  const units = ['kg','sec','min','m','km','lbs'];
+  return units.map(u => `<option value="${u}" ${sel===u?'selected':''}>${u}</option>`).join('');
+}
+
+function opts(min, max, sel) {
+  let o = '<option value="">—</option>';
+  for (let i=min;i<=max;i++) o+=`<option value="${i}"${String(sel)===String(i)?' selected':''}>${i}</option>`;
+  return o;
+}
+function pctOpts(sel) {
+  let o = '<option value="">—</option>';
+  for (let p=30;p<=100;p+=2.5){
+    const v=p%1===0?String(p):p.toFixed(1);
+    o+=`<option value="${v}"${String(sel)===String(v)?' selected':''}>${v}%</option>`;
+  }
+  return o;
+}
+
+// ═══════════════════════════════════════════════════
+//  COLLECT ALL DATA
+// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  SAUVEGARDE AUTOMATIQUE (navigateur, cet appareil)
+// ═══════════════════════════════════════════════════
+const LS_KEY = 'restart_autosave_v1';
+let autosaveTimer = null;
+let autosaveReady = false;   // évite d'écrire pendant le chargement initial
+
+function buildSnapshot() {
+  const prs = {};
+  RM_EXERCISES.forEach(ex => {
+    const el = document.getElementById('pr-'+eid(ex));
+    if (el && el.value !== '') prs[ex] = el.value;
+  });
+  return {
+    version: 3,
+    savedAt:  new Date().toISOString(),
+    progName: (document.getElementById('prog-name')||{}).value || '',
+    athlete:  (document.getElementById('athlete')||{}).value  || '',
+    prs,
+    sections: sections.map(sec => ({
+      name: sec.name || '',
+      weeks: sec.weeks.map((days, w) => ({
+        days,
+        dayNames: (sec.dayNames[w] || []).slice(0, days.length)
+      }))
+    })),
+    ui: { activeSection, activeWeek, activeDay }
+  };
+}
+
+function applySnapshot(data) {
+  document.getElementById('prog-name').value = data.progName || '';
+  document.getElementById('athlete').value   = data.athlete  || '';
+  if (data.prs) {
+    Object.entries(data.prs).forEach(([ex, val]) => {
+      const el = document.getElementById('pr-'+eid(ex));
+      if (el) el.value = val;
+    });
+  }
+  sections = (data.sections || []).map(sec => ({
+    name:     sec.name || '',
+    weeks:    (sec.weeks || []).map(w => w.days || []),
+    dayNames: (sec.weeks || []).map(w => w.dayNames || [])
+  }));
+  if (!sections.length) return false;
+  loadSection(0);
+  // Restaure la position d'écran si elle est encore valide
+  const ui = data.ui || {};
+  if (typeof ui.activeSection === 'number' && sections[ui.activeSection]) loadSection(ui.activeSection);
+  if (typeof ui.activeWeek === 'number' && ui.activeWeek < nWeeks()) activeWeek = ui.activeWeek;
+  if (typeof ui.activeDay  === 'number' && ui.activeDay  < nDaysOf(activeWeek)) activeDay = ui.activeDay;
+  return true;
+}
+
+// Écriture différée : on regroupe les frappes rapprochées
+function scheduleAutosave() {
+  if (!autosaveReady) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(doAutosave, 600);
+}
+
+function doAutosave() {
+  if (!autosaveReady || !hasSections()) return;
+  try {
+    saveState(); syncToSection();
+    localStorage.setItem(LS_KEY, JSON.stringify(buildSnapshot()));
+    flashSaved();
+  } catch (e) {
+    console.warn('Sauvegarde impossible', e);
+  }
+}
+
+function restoreAutosave() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    return applySnapshot(JSON.parse(raw));
+  } catch (e) {
+    console.warn('Restauration impossible', e);
+    return false;
+  }
+}
+
+function clearAutosave() {
+  if (!confirm('Effacer le programme enregistr\u00e9 sur cet appareil ?\n\nPense \u00e0 exporter ton JSON avant si tu veux le conserver.')) return;
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  sections = []; weekData = []; dayNames = [];
+  activeSection = 0; activeWeek = 0; activeDay = 0;
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays(); updateEmptyState();
+  showToast('Programme effac\u00e9');
+}
+
+// Indicateur discret « Enregistré »
+function flashSaved() {
+  const el = document.getElementById('saved-flag');
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1400);
+}
+
+// Toute frappe ou changement dans la page déclenche la sauvegarde
+document.addEventListener('input',  scheduleAutosave, true);
+document.addEventListener('change', scheduleAutosave, true);
+// Filet de sécurité : on écrit aussi quand la page passe en arrière-plan
+document.addEventListener('visibilitychange', () => { if (document.hidden) doAutosave(); });
+window.addEventListener('pagehide', doAutosave);
+
+function collectAll() {
+  saveState();
+  syncToSection();
+  // Sécurise dayNames pour toutes les semaines
+  for (let w = 0; w < weekData.length; w++) {
+    if (!dayNames[w]) dayNames[w] = [];
+    dayNames[w].length = nDaysOf(w);
+    for (let d = 0; d < dayNames[w].length; d++) {
+      if (dayNames[w][d] == null) dayNames[w][d] = '';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  SAVE / LOAD JSON
+// ═══════════════════════════════════════════════════
+function saveJSON() {
+  collectAll();
+  const data = {
+    version: 3,
+    progName:  document.getElementById('prog-name').value || '',
+    athlete:   document.getElementById('athlete').value || '',
+    prs: {},
+    sections: sections.map(sec => ({
+      name: sec.name || '',
+      weeks: sec.weeks.map((days, w) => ({
+        days: days,
+        dayNames: (sec.dayNames[w] || []).slice(0, days.length)
+      }))
+    })),
+  };
+  // Save all PR values
+  RM_EXERCISES.forEach(ex => {
+    const el = document.getElementById('pr-'+eid(ex));
+    if (el) data.prs[ex] = el.value;
+  });
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const fname = (data.progName.replace(/[^\w\s-]/g,'')||'Programme').trim() + '.json';
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('✓ Programme sauvegardé !');
+}
+
+function loadJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Champs généraux
+      document.getElementById('prog-name').value = data.progName || '';
+      document.getElementById('athlete').value   = data.athlete  || '';
+
+      // 1RM
+      if (data.prs) {
+        Object.entries(data.prs).forEach(([ex, val]) => {
+          const el = document.getElementById('pr-'+eid(ex));
+          if (el) el.value = val;
+        });
+      }
+
+      if (data.version === 3 && Array.isArray(data.sections)) {
+        // ── Format v3 : plusieurs sections ──
+        sections = data.sections.map(sec => ({
+          name:     sec.name || '',
+          weeks:    (sec.weeks || []).map(w => w.days || []),
+          dayNames: (sec.weeks || []).map(w => w.dayNames || [])
+        }));
+      } else if (data.version === 2 && Array.isArray(data.weeks)) {
+        // ── Format v2 : une seule section, sans nom ──
+        sections = [{
+          name:     '',
+          weeks:    data.weeks.map(w => w.days || []),
+          dayNames: data.weeks.map(w => w.dayNames || [])
+        }];
+      } else {
+        // ── Format v1 (prototype) : noms de jours globaux ──
+        const wd = data.weekData || [];
+        const globalNames = data.daynames || [];
+        sections = [{
+          name:     '',
+          weeks:    wd,
+          dayNames: wd.map(days => days.map((_,d) => globalNames[d] || ''))
+        }];
+      }
+      if (!sections.length) sections = [ newSection('') ];
+
+      loadSection(0);
+      renderSecTabs();
+      renderTabs();
+      renderDayTabs();
+      renderDays();
+      updateEmptyState();
+      doAutosave();
+      showToast('✓ Programme chargé !');
+    } catch(err) {
+      showToast('Erreur : fichier invalide');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be reloaded
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  EXCEL MODAL
+// ═══════════════════════════════════════════════════
+function openExcelModal() {
+  collectAll();
+  const nW = nWeeks();
+  if (nW === 0) { showToast('Crée d\'abord un programme'); return; }
+  const list = document.getElementById('excel-week-checks');
+  list.innerHTML = '';
+  for (let i = 0; i < nW; i++) {
+    const item = document.createElement('label');
+    item.className = 'week-check-item';
+    item.innerHTML = `<input type="checkbox" value="${i}" checked><span>SEMAINE ${i+1}</span>`;
+    list.appendChild(item);
+  }
+  document.getElementById('excel-modal').classList.add('open');
+}
+function closeExcelModal(e) {
+  if (!e || e.target === document.getElementById('excel-modal')) {
+    document.getElementById('excel-modal').classList.remove('open');
+  }
+}
+function excelSelectAll(val) {
+  document.querySelectorAll('#excel-week-checks input').forEach(c => c.checked = val);
+}
+function excelSelectCurrent() {
+  excelSelectAll(false);
+  const cb = document.querySelector(`#excel-week-checks input[value="${activeWeek}"]`);
+  if (cb) cb.checked = true;
+}
+function doGenerateExcel() {
+  const checks = document.querySelectorAll('#excel-week-checks input:checked');
+  const selected = Array.from(checks).map(c => +c.value);
+  if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
+  document.getElementById('excel-modal').classList.remove('open');
+  generateExcelWithWeeks(selected);
+}
+
+// ═══════════════════════════════════════════════════
+//  GENERATE EXCEL — layout vertical, colonnes fixes
+// ═══════════════════════════════════════════════════
+async function generateExcelWithWeeks(selectedWeeks) {
+  if (!window.ExcelJS) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const progName = document.getElementById('prog-name').value || 'Programme';
+  const athlete  = document.getElementById('athlete').value || '';
+  const wb       = new ExcelJS.Workbook();
+
+  // ── Palette RE-START ──
+  const C = {
+    bg:      '0A0A0A',
+    surface: '141416',
+    surface2:'1C1C1F',
+    border:  '2B2B30',
+    text:    'EFE7D6',
+    muted:   '8A8477',
+    accent:  'C25562',
+    deep:    '7B2028',
+    sbd:     '4A9EFF',  halte: 'F5A623',
+    muscu:   '4ADF8A',  cardio:'BF5AF2',
+    hyrox:   'C0601A',  etire: 'E84D8A',
+  };
+
+  const BLOC_C = { sbd:C.sbd, halte:C.halte, muscu:C.muscu, cardio:C.cardio, hyrox:C.hyrox, etire:C.etire };
+
+  const fill = h => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+h } });
+  const fnt  = (h, bold=false, sz=10, italic=false) =>
+    ({ name:'Calibri', color:{ argb:'FF'+h }, bold, size:sz, italic });
+  const al   = (h='left', v='middle', wrap=false) =>
+    ({ horizontal:h, vertical:v, wrapText:wrap });
+  const bdr  = h => { const s={style:'thin',color:{argb:'FF'+h}}; return {top:s,left:s,bottom:s,right:s}; };
+
+  selectedWeeks.forEach(wIdx => {
+    const ws  = wb.addWorksheet('Semaine '+(wIdx+1));
+    const nD  = nDaysOf(wIdx);
+
+    // Colonne A plus large pour les noms complets
+    [38, 8, 8, 8, 9, 13, 50].forEach((w, i) => { ws.getColumn(i+1).width = w; });
+
+    ws.pageSetup = {
+      orientation:'landscape', fitToPage:true,
+      fitToWidth:1, fitToHeight:0,
+      margins:{ left:0.4, right:0.4, top:0.5, bottom:0.5, header:0, footer:0 }
+    };
+
+    let r = 1;
+
+    // ── TITRE ──
+    ws.getRow(r).height = 32;
+    const tc = ws.getCell(r,1);
+    const secTxt = hasSections() && sections[activeSection].name ? '   ·   '+sections[activeSection].name.toUpperCase() : '';
+    tc.value = 'S'+(wIdx+1)+'   '+progName.toUpperCase()+secTxt+(athlete?'   —   '+athlete.toUpperCase():'');
+    tc.fill = fill(C.bg); tc.font = fnt(C.accent, true, 15);
+    tc.alignment = al('left','middle');
+    ws.mergeCells(r,1,r,7); r++;
+
+    // Ligne accent
+    ws.getRow(r).height = 3;
+    for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.deep);
+    r++;
+    ws.getRow(r).height = 10;
+    for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.bg);
+    r++;
+
+    for (let d = 0; d < nD; d++) {
+      const dn  = getDayName(wIdx, d);
+      const exs = (weekData[wIdx]&&weekData[wIdx][d]) || [];
+
+      // ── DAY header ──
+      ws.getRow(r).height = 24;
+      const dc = ws.getCell(r,1);
+      dc.value = 'DAY '+(d+1)+(dn?'   '+dn.toUpperCase():'');
+      dc.fill = fill(C.surface2); dc.font = fnt(C.text, true, 12);
+      dc.alignment = al('left','middle');
+      ws.mergeCells(r,1,r,7); r++;
+
+      // ── En-têtes colonnes ──
+      ws.getRow(r).height = 15;
+      ['EXERCICE','SETS','REPS','RPE','%','CHARGE','COMMENTAIRES'].forEach((h,i) => {
+        const c = ws.getCell(r,i+1);
+        c.value = h;
+        c.fill  = fill(C.surface);
+        c.font  = fnt(C.muted, true, 8);
+        c.alignment = al(i===0||i===6?'left':'center','middle');
+        c.border = bdr(C.border);
+      });
+      r++;
+
+      if (exs.length===0) {
+        ws.getRow(r).height = 18;
+        for (let i=1;i<=7;i++) { ws.getCell(r,i).fill=fill(C.surface); ws.getCell(r,i).border=bdr(C.border); }
+        r++;
+      } else {
+        exs.forEach((ex, ei) => {
+          const b      = ex.bloc||'muscu';
+          const isAuto = b==='sbd'||b==='halte';
+          const bClr   = BLOC_C[b] || C.text;
+          const isLastEx = ei===exs.length-1;
+          const subs   = (ex.subRows&&ex.subRows.length)
+            ? ex.subRows
+            : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,
+                charge:ex.charge,unit:ex.unit,chargeUserEdited:ex.chargeUserEdited}];
+          const detail = [ex.note,ex.conseil].filter(Boolean).join(' — ');
+
+          subs.forEach((sr, si) => {
+            const u  = sr.unit||'kg';
+            const chRaw = isAuto&&!sr.chargeUserEdited
+              ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:b})
+              : (sr.charge?sr.charge+' '+u:'');
+            const ch = chRaw==='0 kg'||chRaw==='0'?'—':(chRaw||'—');
+
+            ws.getRow(r).height = 18;
+
+            // Col A — nom coloré bloc, fond surface uniforme
+            const ec = ws.getCell(r,1);
+            ec.value = si===0?(ex.exercise||''):'';
+            ec.fill  = fill(C.surface);
+            ec.font  = fnt(si===0?bClr:C.muted, true, 10);
+            ec.alignment = al('left','middle');
+            ec.border = bdr(C.border);
+
+            // Cols B-F — fond surface, texte clair, PAS de couleur bloc
+            [sr.sets||'',sr.reps||'',sr.rpe||'',sr.pct?sr.pct+'%':''].forEach((v,i) => {
+              const c = ws.getCell(r,i+2);
+              c.value = v;
+              c.fill  = fill(C.surface);
+              c.font  = fnt(C.text, false, 10);
+              c.alignment = al('center','middle');
+              c.border = bdr(C.border);
+            });
+
+            // Col F — CHARGE en vert accent
+            const chc = ws.getCell(r,6);
+            chc.value = ch;
+            chc.fill  = fill(C.surface);
+            chc.font  = fnt(C.accent, true, 10);
+            chc.alignment = al('center','middle');
+            chc.border = bdr(C.border);
+
+            // Col G — Commentaires vide
+            const gc = ws.getCell(r,7);
+            gc.value = '';
+            gc.fill  = fill(C.surface2);
+            gc.font  = fnt(C.muted, false, 10);
+            gc.alignment = al('left','middle');
+            gc.border = bdr(C.border);
+
+            r++;
+          });
+
+          // Note / conseil
+          if (detail) {
+            ws.getRow(r).height = 13;
+            const nc = ws.getCell(r,1);
+            nc.value = detail;
+            nc.fill  = fill(C.surface);
+            nc.font  = fnt(C.muted, false, 8, true);
+            nc.alignment = al('left','middle',true);
+            nc.border = bdr(C.border);
+            for (let i=2;i<=7;i++) {
+              ws.getCell(r,i).fill = fill(C.surface);
+              ws.getCell(r,i).border = bdr(C.border);
+            }
+            r++;
+          }
+
+          // Séparateur fin entre exercices
+          if (!isLastEx) {
+            ws.getRow(r).height = 3;
+            for (let i=1;i<=7;i++) {
+              ws.getCell(r,i).fill = fill(C.surface2);
+            }
+            r++;
+          }
+        });
+      }
+
+      // Espace entre jours
+      ws.getRow(r).height = 14;
+      for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.bg);
+      r++;
+    }
+  });
+
+  const secSuffix = hasSections() && sections[activeSection].name
+    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
+  const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSuffix)+'.xlsx';
+  const buf   = await wb.xlsx.writeBuffer();
+  const blob  = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  shareOrDownload(blob,fname,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  showToast('✓ Excel généré !');
+}
+
+// ═══════════════════════════════════════════════════
+//  GENERATE PDF// ═══════════════════════════════════════════════════
+//  GENERATE PDF (jsPDF direct download)
+// ═══════════════════════════════════════════════════
+async function generatePDF() {
+  // Load jsPDF if not already loaded
+  if (!window.jspdf) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  if (!window.jspdf) { showToast('Erreur chargement jsPDF'); return; }
+  collectAll();
+  const progName = document.getElementById('prog-name').value || 'Programme';
+  const athlete  = document.getElementById('athlete').value || '';
+  const nW = nWeeks();
+  if (nW === 0) { showToast('Cree d\'abord un programme'); return; }
+  const maxD = Math.max(1, ...weekData.map((_,i)=>nDaysOf(i)));
+
+  // ── jsPDF generation ──
+  const { jsPDF } = window.jspdf;
+  const BLOC_HEX = {sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105], cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]};
+  const COLS = {sbd:'#4a9eff', halte:'#f5a623', muscu:'#22c069', cardio:'#bf5af2', hyrox:'#c0601a', etire:'#e84d8a'};
+
+  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  const PW = 210, PH = 297;
+  const ML = 12, MR = 12, MT = 14, MB = 14;
+  const CW = PW - ML - MR; // 186mm
+
+  // col widths: exercice, sets, reps, rpe, %, charge, ressenti
+  const nDFactor = maxD <= 3 ? 0.34 : maxD === 4 ? 0.30 : 0.25;
+  const exW  = CW * nDFactor;
+  const numW = CW * 0.07;
+  const pctW = CW * 0.08;
+  const chW  = CW * 0.10;
+  const noteW = CW - exW - numW*3 - pctW - chW;
+
+  function hex2rgb(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return[r,g,b]; }
+
+  // ── Draw page header (repeated on every page) ──
+  function drawPageHeader(wIdx) {
+    const y = MT;
+    doc.setFillColor(123,32,40);          // bordeaux RE-START
+    doc.rect(ML, y, CW, 10, 'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(239,231,214);        // creme
+    const secName = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
+    doc.text(progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : ''), ML+4, y+6.5);
+    if (athlete) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(226,206,196);
+      doc.text(athlete.toUpperCase(), ML+4, y+9.5);
+    }
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.setTextColor(239,231,214);
+    doc.text('S'+(wIdx+1), PW-MR-10, y+7);
+  }
+
+  // ── Compute total content height for a week to derive scale ──
+  function computeWeekHeight(wIdx, rowH, hhH, dayLabelH, dayGapH) {
+    let h = 0;
+    for (let d = 0; d < nDaysOf(wIdx); d++) {
+      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+      h += dayLabelH + hhH + (exs.length || 1) * rowH + dayGapH;
+    }
+    return h;
+  }
+
+  // ── Draw one week scaled to fill the page ──
+  function drawWeek(wIdx) {
+    const HEADER_H = 14;
+    const availH = PH - MT - MB - HEADER_H;
+
+    // Count total sub-rows for scaling
+    function totalRows(wIdx) {
+      let n = 0;
+      for (let d = 0; d < nDaysOf(wIdx); d++) {
+        const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+        if (exs.length === 0) { n += 1; continue; }
+        exs.forEach(ex => {
+          n += (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
+        });
+      }
+      return n;
+    }
+
+    const baseRowH   = 9;
+    const baseHH     = 6.5;
+    const baseDayLbl = 9;
+    const baseDayGap = 8;
+    const nDw        = Math.max(1, nDaysOf(wIdx));
+    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap) + totalRows(wIdx) * baseRowH;
+    const scale      = Math.min(availH / baseTotal, 1.8);
+
+    const rowH   = baseRowH   * scale;
+    const hh     = baseHH     * scale;
+    const dayLbl = baseDayLbl * scale;
+    const dayGap = baseDayGap * scale;
+    const fsSub  = Math.min(9 * scale, 13);
+    const fsHdr  = Math.min(7 * scale, 10);
+    const fsRow  = Math.min(8 * scale, 11);
+    const fsNote = Math.min(7 * scale, 9);
+    const barW   = 2 * scale;
+
+    let y = MT + HEADER_H;
+
+    for (let d = 0; d < nDaysOf(wIdx); d++) {
+      const dn  = getDayName(wIdx, d);
+      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+
+      // DAY label
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(fsSub);
+      doc.setTextColor(17,17,17);
+      doc.text('DAY '+(d+1), ML, y+dayLbl*0.65);
+      if (dn) {
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(fsSub*0.85);
+        doc.setTextColor(120,120,120);
+        doc.text('— '+dn.toUpperCase(), ML + doc.getTextWidth('DAY '+(d+1)) + 2, y+dayLbl*0.65);
+      }
+      y += dayLbl;
+
+      // Table header — fond sombre texte blanc
+      doc.setFillColor(45,45,45);
+      doc.rect(ML, y, CW, hh, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(fsHdr);
+      doc.setTextColor(210,210,210);
+      let x = ML;
+      const headers = ['EXERCICE','SETS','REPS','RPE','%','CHARGE','RESSENTI'];
+      const widths  = [exW, numW, numW, numW, pctW, chW, noteW];
+      headers.forEach((h,i) => {
+        doc.text(h, x+(i===0||i===6?1.5:widths[i]/2), y+hh*0.65, {align:i===0||i===6?'left':'center'});
+        x += widths[i];
+      });
+      const tableStartY = y;
+      y += hh;
+
+      // Rows
+      if (exs.length === 0) {
+        doc.setFillColor(255,255,255);
+        doc.rect(ML, y, CW, rowH, 'F');
+        doc.setFontSize(fsRow);
+        doc.setTextColor(200,200,200);
+        doc.text('—', ML+CW/2, y+rowH*0.65, {align:'center'});
+        y += rowH;
+      } else {
+        exs.forEach((ex, ri) => {
+          const isAuto  = ex.bloc==='sbd'||ex.bloc==='halte';
+          const blocRgb = BLOC_HEX[ex.bloc] || [170,170,170];
+          const subs    = (ex.subRows && ex.subRows.length > 0) ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
+          const bgBase  = ri%2===0 ? 255 : 250;
+
+          subs.forEach((sr, si) => {
+            const ty = y + rowH*0.65;
+            const srCh = sr.chargeUserEdited && sr.charge
+              ? sr.charge+' kg'
+              : (isAuto ? computeAutoLoad({exercise:ex.exercise, pct:sr.pct, bloc:ex.bloc}) : (sr.charge?sr.charge+' kg':''));
+
+            // Row background blanc
+            doc.setFillColor(255,255,255);
+            doc.rect(ML, y, CW, rowH, 'F');
+
+            // Exercise column — fond gris léger sur toute la largeur
+            if (si === 0) {
+              doc.setFillColor(245,245,245);
+              doc.rect(ML, y, exW, rowH, 'F');
+            }
+
+            // Exercise name + conseil + note (first sub-row only)
+            if (si === 0) {
+              const maxW = exW - barW - 5;
+              const subText = [ex.note, ex.conseil].filter(Boolean).join(' — ');
+              const hasSubText = subText.trim().length > 0;
+
+              // Name
+              doc.setFont('helvetica','bold');
+              doc.setFontSize(fsRow);
+              doc.setTextColor(30,30,30);
+              let name = ex.exercise || '';
+              if (doc.getTextWidth(name) > maxW) {
+                while (name.length > 2 && doc.getTextWidth(name+'…') > maxW) name = name.slice(0,-1);
+                name += '…';
+              }
+              const nameY = hasSubText ? y + rowH*0.38 : ty;
+              doc.text(name, ML+3, nameY);
+
+              // Conseil / note sous le nom
+              if (hasSubText) {
+                doc.setFont('helvetica','normal');
+                doc.setFontSize(Math.max(fsNote*0.85, 6));
+                doc.setTextColor(120,120,120);
+                let sub = subText;
+                if (doc.getTextWidth(sub) > maxW) {
+                  while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxW) sub = sub.slice(0,-1);
+                  sub += '…';
+                }
+                doc.text(sub, ML+3, y + rowH*0.72);
+              }
+            }
+
+            // Sets Reps RPE %
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(fsRow);
+            doc.setTextColor(50,50,50);
+            let cx = ML + exW;
+            [sr.sets||'', sr.reps||'', sr.rpe||'', sr.pct?sr.pct+'%':''].forEach((v,i) => {
+              const ww = [numW,numW,numW,pctW][i];
+              doc.text(String(v), cx+ww/2, ty, {align:'center'});
+              cx += ww;
+            });
+
+            // Charge — noir gras avec unité correcte
+            const srUnit = sr.unit || 'kg';
+            const chFinal = sr.chargeUserEdited && sr.charge
+              ? sr.charge+' '+srUnit
+              : (isAuto ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:ex.bloc}) : (sr.charge ? sr.charge+' '+srUnit : '—'));
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(fsRow);
+            doc.setTextColor(26,26,26);
+            doc.text(String(chFinal), cx+chW/2, ty, {align:'center'});
+            cx += chW;
+
+            // Ressenti — vide, pas de ligne
+
+            y += rowH;
+          }); // end subs.forEach
+
+          // Séparateur entre exercices
+          if (ri < exs.length - 1) {
+            y += 1.5;
+            doc.setDrawColor(180,180,180);
+            doc.setLineWidth(0.35);
+            doc.line(ML, y, ML+CW, y);
+            y += 1.5;
+          }
+        }); // end exs.forEach
+      }
+
+      // Table border
+      doc.setDrawColor(200,200,200);
+      doc.setLineWidth(0.2);
+      doc.rect(ML, tableStartY, CW, y - tableStartY);
+
+      y += dayGap;
+    }
+  }
+
+
+  for (let w = 0; w < nW; w++) {
+    if (w > 0) doc.addPage();
+    drawPageHeader(w);
+    drawWeek(w);
+  }
+
+  const secSfx = hasSections() && sections[activeSection].name
+    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
+  const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSfx)+'.pdf';
+  doc.save(fname);
+  showToast('✓ PDF téléchargé !');
+}
+
+// ═══════════════════════════════════════════════════
+//  SHARE OR DOWNLOAD
+// ═══════════════════════════════════════════════════
+async function shareOrDownload(blob, filename, mimeType) {
+  const file = new File([blob], filename, {type: mimeType});
+  if (navigator.canShare && navigator.canShare({files:[file]})) {
+    try {
+      await navigator.share({files:[file], title: filename});
+      showToast('✓ Fichier partagé !');
+      return;
+    } catch(e) {
+      if (e.name !== 'AbortError') console.warn('share failed', e);
+    }
+  }
+  // fallback download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  showToast('✓ Fichier téléchargé !');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

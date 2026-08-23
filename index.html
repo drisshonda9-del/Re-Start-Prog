@@ -151,6 +151,19 @@ select option { background: #1a1d25; }
 .pr-section-title.sbd   { color: var(--sbd); }
 .pr-section-title.halte { color: var(--halte); }
 .pr-table { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+.pr-section-title.used { color: var(--accent); border-bottom-color: var(--accent-deep); }
+.pr-hint {
+  font-size: 12px; color: var(--muted); line-height: 1.5;
+  padding: 14px 12px; text-align: center;
+  border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 12px;
+}
+.pr-toggle {
+  width: 100%; background: transparent; border: 1px solid var(--border);
+  color: var(--muted); padding: 11px; border-radius: 6px; cursor: pointer;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;
+}
+.pr-toggle:active { border-color: var(--accent); color: var(--accent); }
 .pr-row { display: grid; grid-template-columns: 1fr 90px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
 .pr-row:last-child { border-bottom: none; }
 .pr-row.sbd   { border-left: 2px solid var(--sbd); }
@@ -976,6 +989,7 @@ function init() {
 
   renderPRSection();
   const restored = restoreAutosave();
+  renderPRSection();
   renderSecTabs();
   renderTabs();
   renderDayTabs();
@@ -989,43 +1003,120 @@ function init() {
 // ═══════════════════════════════════════════════════
 //  PR SECTION
 // ═══════════════════════════════════════════════════
+// ── Exercices SBD / haltérophilie réellement utilisés dans le programme ──
+function usedRMExercises() {
+  const used = new Set();
+  const scan = (weeks) => (weeks||[]).forEach(days =>
+    (days||[]).forEach(day =>
+      (day||[]).forEach(ex => {
+        if ((ex.bloc === 'sbd' || ex.bloc === 'halte') && (ex.exercise||'').trim()) {
+          used.add(ex.exercise.trim());
+        }
+      })));
+  // toutes les sections, pas seulement celle affichée
+  if (sections && sections.length) sections.forEach(sec => scan(sec.weeks));
+  else scan(weekData);
+  // + ce qui est saisi à l'écran mais pas encore enregistré
+  document.querySelectorAll('.ex-card').forEach(c => {
+    const b = c.dataset.bloc, n = (c.querySelector('.ex-name-input')||{}).value;
+    if ((b === 'sbd' || b === 'halte') && n && n.trim()) used.add(n.trim());
+  });
+  return used;
+}
+
+// Construit une ligne de saisie de 1RM
+function prRow(exName, bloc, currentValue) {
+  const parts = exName.split('(');
+  const main  = parts[0].trim();
+  const sub   = parts[1] ? parts[1].replace(')','').trim() : '';
+  const val = prValue(exName);
+  const row = document.createElement('div');
+  row.className = `pr-row ${bloc}`;
+  row.innerHTML = `
+    <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
+    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${exName.replace(/"/g,'&quot;')}" value="${val}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+  return row;
+}
+
 function renderPRSection() {
   const body = document.getElementById('pr-body');
-  body.innerHTML = '';
+  if (!body) return;
 
-  ['sbd','halte'].forEach(bloc => {
-    const data = DB[bloc];
-    const title = document.createElement('div');
-    title.className = `pr-section-title ${bloc}`;
-    title.textContent = data.label;
-    body.appendChild(title);
+  body.innerHTML = '';
+  const used = usedRMExercises();
+
+  // ── 1. Exercices du programme, en tête ──
+  if (used.size) {
+    const t = document.createElement('div');
+    t.className = 'pr-section-title used';
+    t.textContent = 'Dans ce programme';
+    body.appendChild(t);
 
     const table = document.createElement('div');
     table.className = 'pr-table';
-    data.exercises.forEach(ex => {
-      const row = document.createElement('div');
-      row.className = `pr-row ${bloc}`;
-      const parts = ex.n.split('(');
-      const main = parts[0].trim();
-      const sub  = parts[1] ? parts[1].replace(')','').trim() : '';
-      row.innerHTML = `
-        <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
-        <input class="pr-input" type="number" id="pr-${eid(ex.n)}" value="${RM_DEFAULTS[ex.n]||''}" placeholder="kg" inputmode="decimal" oninput="onPRChange()">`;
-      table.appendChild(row);
+    ['sbd','halte'].forEach(bloc => {
+      DB[bloc].exercises.forEach(ex => {
+        if (used.has(ex.n)) table.appendChild(prRow(ex.n, bloc));
+      });
     });
     body.appendChild(table);
-  });
+  } else {
+    const hint = document.createElement('div');
+    hint.className = 'pr-hint';
+    hint.textContent = 'Ajoute un exercice SBD ou haltérophilie à ton programme : son 1RM apparaîtra ici.';
+    body.appendChild(hint);
+  }
+
+  // ── 2. Le reste, replié ──
+  const toggle = document.createElement('button');
+  toggle.className = 'pr-toggle';
+  toggle.textContent = prAllOpen ? '− Masquer les autres exercices' : '+ Voir tous les exercices';
+  toggle.onclick = () => { prAllOpen = !prAllOpen; renderPRSection(); };
+  body.appendChild(toggle);
+
+  if (prAllOpen) {
+    ['sbd','halte'].forEach(bloc => {
+      const rest = DB[bloc].exercises.filter(ex => !used.has(ex.n));
+      if (!rest.length) return;
+      const t = document.createElement('div');
+      t.className = `pr-section-title ${bloc}`;
+      t.textContent = DB[bloc].label;
+      body.appendChild(t);
+      const table = document.createElement('div');
+      table.className = 'pr-table';
+      rest.forEach(ex => table.appendChild(prRow(ex.n, bloc)));
+      body.appendChild(table);
+    });
+  }
+}
+
+let prAllOpen = false;
+
+// Reconstruit la liste sans gêner une saisie en cours
+function refreshPRSection() {
+  const a = document.activeElement;
+  if (a && a.classList && a.classList.contains('pr-input')) return;  // saisie en cours
+  renderPRSection();
 }
 
 // Un 1RM modifié → recalcule toutes les charges auto non saisies manuellement
-function onPRChange() {
+function onPRChange(input) {
+  if (input && input.dataset.ex) setPR(input.dataset.ex, input.value);
   document.querySelectorAll('.ex-card').forEach(c => refreshLoad(c));
 }
 
 function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+// Registre des 1RM : source de vérité, indépendante de l'affichage.
+// Un exercice masqué conserve donc sa valeur.
+let PR = {};
+function prValue(name) {
+  if (name in PR) return PR[name];
+  return (RM_DEFAULTS[name] !== undefined) ? String(RM_DEFAULTS[name]) : '';
+}
+function setPR(name, v) { PR[name] = v; }
 function getPR(name){
-  const el = document.getElementById('pr-'+eid(name));
-  return el ? parseFloat(el.value)||0 : 0;
+  return parseFloat(prValue(name)) || 0;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1260,7 +1351,7 @@ function switchSection(i) {
   if (i === activeSection) return;
   saveState(); syncToSection();
   loadSection(i);
-  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays();
+  renderSecTabs(); renderTabs(); renderDayTabs(); renderDays(); refreshPRSection();
 }
 
 function addSection() {
@@ -1722,6 +1813,7 @@ function acRender(input) {
       updateCardBloc(card, it.dataset.b);
       refreshLoad(card);
       list.classList.remove('open');
+      refreshPRSection();
       scheduleAutosave();
     };
   });
@@ -1812,6 +1904,8 @@ function loadCustomExercises() {
 
 function onExNameInput(input) {
   acRender(input);
+  clearTimeout(window._prT);
+  window._prT = setTimeout(refreshPRSection, 400);
   const card = input.closest('.ex-card');
   // auto-detect bloc from DB
   const val = input.value.trim();
@@ -1913,6 +2007,7 @@ function selectExFromBrowser(name, bloc) {
   updateCardBloc(pendingBrowserCard, bloc);
   refreshLoad(pendingBrowserCard);
   closeBrowser();
+  refreshPRSection();
 }
 function filterBrowser(q) {
   const body = document.getElementById('browser-body');
@@ -1959,10 +2054,7 @@ let autosaveReady = false;   // évite d'écrire pendant le chargement initial
 
 function buildSnapshot() {
   const prs = {};
-  RM_EXERCISES.forEach(ex => {
-    const el = document.getElementById('pr-'+eid(ex));
-    if (el && el.value !== '') prs[ex] = el.value;
-  });
+  Object.keys(PR).forEach(k => { if (PR[k] !== '') prs[k] = PR[k]; });
   return {
     version: 3,
     savedAt:  new Date().toISOString(),
@@ -1983,12 +2075,7 @@ function buildSnapshot() {
 function applySnapshot(data) {
   document.getElementById('prog-name').value = data.progName || '';
   document.getElementById('athlete').value   = data.athlete  || '';
-  if (data.prs) {
-    Object.entries(data.prs).forEach(([ex, val]) => {
-      const el = document.getElementById('pr-'+eid(ex));
-      if (el) el.value = val;
-    });
-  }
+  if (data.prs) { PR = {}; Object.entries(data.prs).forEach(([ex, val]) => setPR(ex, val)); }
   sections = (data.sections || []).map(sec => ({
     name:     sec.name || '',
     weeks:    (sec.weeks || []).map(w => w.days || []),
@@ -2090,10 +2177,7 @@ function saveJSON() {
     })),
   };
   // Save all PR values
-  RM_EXERCISES.forEach(ex => {
-    const el = document.getElementById('pr-'+eid(ex));
-    if (el) data.prs[ex] = el.value;
-  });
+  Object.keys(PR).forEach(k => { if (PR[k] !== '') data.prs[k] = PR[k]; });
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
   const fname = (data.progName.replace(/[^\w\s-]/g,'')||'Programme').trim() + '.json';
@@ -2117,12 +2201,7 @@ function loadJSON(event) {
       document.getElementById('athlete').value   = data.athlete  || '';
 
       // 1RM
-      if (data.prs) {
-        Object.entries(data.prs).forEach(([ex, val]) => {
-          const el = document.getElementById('pr-'+eid(ex));
-          if (el) el.value = val;
-        });
-      }
+      if (data.prs) { PR = {}; Object.entries(data.prs).forEach(([ex, val]) => setPR(ex, val)); }
 
       if (data.version === 3 && Array.isArray(data.sections)) {
         // ── Format v3 : plusieurs sections ──
@@ -2156,6 +2235,7 @@ function loadJSON(event) {
       renderDayTabs();
       renderDays();
       updateEmptyState();
+      renderPRSection();
       doAutosave();
       showToast('✓ Programme chargé !');
     } catch(err) {

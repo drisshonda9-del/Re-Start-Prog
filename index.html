@@ -206,6 +206,83 @@ select option { background: #1a1d25; }
 .empty-state .es-sub { font-size: 13px; line-height: 1.5; margin-bottom: 22px; }
 
 /* ── AJOUTER UN JOUR ── */
+/* ── MENU CONTEXTUEL (appui long / clic droit) ── */
+.ctx-menu {
+  position: fixed; z-index: 500;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0,0,0,.6);
+  min-width: 210px; display: none;
+}
+.ctx-menu.open { display: block; }
+.ctx-head {
+  padding: 11px 15px 9px; border-bottom: 1px solid var(--border);
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ctx-item {
+  display: block; width: 100%; text-align: left;
+  padding: 14px 15px; background: transparent; border: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ctx-item:last-child { border-bottom: none; }
+.ctx-item:active { background: var(--surface); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-item:disabled { opacity: .3; cursor: default; }
+.ctx-backdrop {
+  position: fixed; inset: 0; z-index: 499; display: none;
+}
+.ctx-backdrop.open { display: block; }
+/* évite la sélection de texte pendant l'appui long */
+.sec-tab, .week-tab, .day-tab {
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ── AUTOCOMPLÉTION MAISON (fiable sur mobile) ── */
+.ac-list {
+  position: absolute; z-index: 60; left: 0; right: 0; top: 100%;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; margin-top: 4px; overflow-y: auto;
+  max-height: 230px; display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.55);
+}
+.ac-list.open { display: block; }
+.ac-item {
+  padding: 11px 12px; font-size: 13px; color: var(--text);
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:active, .ac-item.sel { background: var(--surface); }
+.ac-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ac-new {
+  color: var(--accent); font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 1px;
+}
+
+/* ── LIGNES COACH / CLIENT ── */
+.ex-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-top: 1px solid var(--border);
+}
+.ex-line-tag {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1.5px;
+  text-transform: uppercase; flex-shrink: 0; width: 46px;
+}
+.ex-line-tag.coach  { color: var(--accent); }
+.ex-line-tag.client { color: var(--green-lt); }
+.ex-line input {
+  flex: 1; min-width: 0; background: transparent; border: none;
+  color: var(--muted); font-size: 12px; outline: none; font-style: italic;
+  font-family: 'DM Sans', sans-serif;
+}
+.ex-line input::placeholder { color: #2a2d35; }
+.ex-line input:focus { color: var(--text); }
+.ex-line input[readonly] { color: #4a4a52; }
+
 /* ── INDICATEUR DE SAUVEGARDE ── */
 .saved-flag {
   position: fixed; top: 10px; right: 12px; z-index: 400;
@@ -541,6 +618,8 @@ select option { background: #1a1d25; }
 
 <!-- WEEK TABS -->
 <div class="saved-flag" id="saved-flag">Enregistré</div>
+<div class="ctx-backdrop" id="ctx-backdrop" onclick="closeCtx()"></div>
+<div class="ctx-menu" id="ctx-menu"></div>
 <div class="sec-tabs" id="sec-tabs"></div>
 <div class="week-tabs" id="week-tabs"></div>
 <div class="day-tabs" id="day-tabs"></div>
@@ -603,6 +682,18 @@ select option { background: #1a1d25; }
     </div>
     <button class="sec-btn sec-btn-danger" id="sec-delete" onclick="deleteSection()" style="width:100%;margin-bottom:10px">Supprimer cette section</button>
     <button class="modal-cancel" onclick="applySecName()">Terminé</button>
+  </div>
+</div>
+
+<!-- AJOUT D'UN EXERCICE À LA BIBLIOTHÈQUE -->
+<div class="modal" id="addex-modal" onclick="closeAddExModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Ajouter à la bibliothèque</div>
+    <div id="addex-name" style="text-align:center;font-size:15px;color:var(--text);margin-bottom:14px;font-weight:600"></div>
+    <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Ranger dans</div>
+    <select class="sec-input" id="addex-cat" style="margin-bottom:14px"></select>
+    <button onclick="confirmAddEx()" style="width:100%;background:var(--accent-deep);border:none;color:var(--cream);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:10px">Ajouter l'exercice</button>
+    <button class="modal-cancel" onclick="closeAddExModal()">Annuler</button>
   </div>
 </div>
 
@@ -875,6 +966,14 @@ function hasProgram()  { return sections.length > 0 && weekData.length > 0; }
 //  INIT
 // ═══════════════════════════════════════════════════
 function init() {
+  // Classement alphabétique de la bibliothèque
+  Object.values(DB).forEach(data => {
+    if (data.exercises) data.exercises.sort((a,b) => a.n.localeCompare(b.n,'fr'));
+    if (data.subs) Object.keys(data.subs).forEach(k => data.subs[k].sort((a,b) => a.localeCompare(b,'fr')));
+  });
+  ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+  loadCustomExercises();
+
   renderPRSection();
   const restored = restoreAutosave();
   renderSecTabs();
@@ -1015,8 +1114,37 @@ function renderTabs() {
   if (!hasProgram()) { el.innerHTML = ''; el.style.display = 'none'; return; }
   el.style.display = 'flex';
   el.innerHTML =
-    weekData.map((_,i)=>`<button class="week-tab${i===activeWeek?' active':''}" onclick="switchWeek(${i})">W${i+1}</button>`).join('')
+    weekData.map((_,i)=>`<button class="week-tab${i===activeWeek?' active':''}" data-i="${i}" onclick="switchWeek(${i})">W${i+1}</button>`).join('')
     + `<button class="week-add" onclick="openWeekModal()" title="Ajouter une semaine">+</button>`;
+
+  el.querySelectorAll('.week-tab').forEach(tab => {
+    const i = +tab.dataset.i;
+    bindCtx(tab, () => ({
+      title: `Semaine W${i+1}`,
+      items: [
+        { label: 'Dupliquer cette semaine', action: () => { switchWeek(i); addWeek(true); } },
+        { label: 'Supprimer la semaine', danger: true, disabled: weekData.length <= 1,
+          action: () => deleteWeek(i) },
+      ]
+    }));
+  });
+}
+
+// ── SUPPRESSION D'UNE SEMAINE ──
+function deleteWeek(i) {
+  if (!hasProgram() || weekData.length <= 1) return;
+  saveState();
+  const days = weekData[i] || [];
+  const plein = days.some(d => d.some(ex => (ex.exercise||'').trim() !== ''));
+  if (plein && !confirm(`Supprimer la semaine W${i+1} et tous ses jours ?`)) return;
+  weekData.splice(i, 1);
+  if (dayNames) dayNames.splice(i, 1);
+  syncToSection();
+  if (activeWeek >= weekData.length) activeWeek = weekData.length - 1;
+  if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
+  renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
+  showToast('Semaine supprimée');
 }
 
 function switchWeek(i){
@@ -1024,6 +1152,61 @@ function switchWeek(i){
   activeWeek = i;
   if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
   renderTabs(); renderDayTabs(); renderDays();
+}
+
+// ═══════════════════════════════════════════════════
+//  MENU CONTEXTUEL  (appui long sur mobile, clic droit sur ordinateur)
+// ═══════════════════════════════════════════════════
+let ctxTimer = null, ctxMoved = false;
+
+function openCtx(x, y, title, items) {
+  const menu = document.getElementById('ctx-menu');
+  const back = document.getElementById('ctx-backdrop');
+  menu.innerHTML = `<div class="ctx-head">${title}</div>`
+    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${it.label}</button>`).join('');
+  menu.querySelectorAll('.ctx-item').forEach(btn => {
+    btn.onclick = () => {
+      const it = items[+btn.dataset.i];
+      closeCtx();
+      if (!it.disabled && it.action) it.action();
+    };
+  });
+  menu.classList.add('open');
+  back.classList.add('open');
+  // Repositionne pour rester dans l'écran
+  const r = menu.getBoundingClientRect();
+  const L = Math.min(Math.max(8, x), window.innerWidth  - r.width  - 8);
+  const T = Math.min(Math.max(8, y), window.innerHeight - r.height - 8);
+  menu.style.left = L + 'px';
+  menu.style.top  = T + 'px';
+}
+
+function closeCtx() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  document.getElementById('ctx-backdrop').classList.remove('open');
+}
+
+// Branche appui long + clic droit sur un élément
+function bindCtx(el, buildMenu) {
+  el.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const m = buildMenu();
+    openCtx(e.clientX, e.clientY, m.title, m.items);
+  });
+  el.addEventListener('touchstart', e => {
+    ctxMoved = false;
+    const t = e.touches[0];
+    clearTimeout(ctxTimer);
+    ctxTimer = setTimeout(() => {
+      if (ctxMoved) return;
+      const m = buildMenu();
+      openCtx(t.clientX, t.clientY, m.title, m.items);
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, 480);
+  }, {passive:true});
+  el.addEventListener('touchmove',   () => { ctxMoved = true; clearTimeout(ctxTimer); }, {passive:true});
+  el.addEventListener('touchend',    () => clearTimeout(ctxTimer));
+  el.addEventListener('touchcancel', () => clearTimeout(ctxTimer));
 }
 
 // ═══════════════════════════════════════════════════
@@ -1037,13 +1220,40 @@ function renderSecTabs() {
   let html = '';
   sections.forEach((_, i) => {
     const act = i === activeSection;
-    html += `<button class="sec-tab${act?' active':''}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
+    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
           + `<span class="sec-label">${sectionLabel(i)}</span>`
-          + (act ? `<span class="sec-menu" onclick="event.stopPropagation();openSecModal()">⋯</span>` : '')
+          + (act ? `<span class="sec-menu">⋯</span>` : '')
           + `</button>`;
   });
   html += `<button class="sec-add" onclick="addSection()" title="Ajouter une section">+</button>`;
   el.innerHTML = html;
+
+  // Appui long / clic droit sur chaque section
+  el.querySelectorAll('.sec-tab').forEach(tab => {
+    const i = +tab.dataset.i;
+    bindCtx(tab, () => ({
+      title: sectionLabel(i),
+      items: [
+        { label: 'Renommer…',            action: () => { switchSection(i); openSecModal(); } },
+        { label: '← Déplacer à gauche',  disabled: i === 0,                   action: () => { switchSection(i); moveSection(-1); } },
+        { label: 'Déplacer à droite →',  disabled: i === sections.length - 1, action: () => { switchSection(i); moveSection(1); } },
+        { label: 'Supprimer la section', danger: true, disabled: sections.length <= 1,
+          action: () => { switchSection(i); deleteSection(); } },
+      ]
+    }));
+    // Sur la section active, le ⋯ ouvre aussi le menu au simple appui
+    const dots = tab.querySelector('.sec-menu');
+    if (dots) dots.onclick = e => {
+      e.stopPropagation();
+      const r = dots.getBoundingClientRect();
+      openCtx(r.left, r.bottom + 6, sectionLabel(i), [
+        { label: 'Renommer…',            action: () => openSecModal() },
+        { label: '← Déplacer à gauche',  disabled: i === 0,                   action: () => moveSection(-1) },
+        { label: 'Déplacer à droite →',  disabled: i === sections.length - 1, action: () => moveSection(1) },
+        { label: 'Supprimer la section', danger: true, disabled: sections.length <= 1, action: () => deleteSection() },
+      ]);
+    };
+  });
 }
 
 function switchSection(i) {
@@ -1124,10 +1334,21 @@ function renderDayTabs() {
   for (let d = 0; d < nD; d++) {
     const dn = getDayName(activeWeek, d);
     const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
-    html += `<button class="day-tab${d===activeDay?' active':''}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
   }
   html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
   el.innerHTML = html;
+
+  el.querySelectorAll('.day-tab').forEach(tab => {
+    const d = +tab.dataset.i;
+    bindCtx(tab, () => ({
+      title: getDayName(activeWeek, d) || `DAY ${d+1}`,
+      items: [
+        { label: 'Dupliquer ce jour', action: () => { switchDay(d); addDay(true); } },
+        { label: 'Supprimer le jour', danger: true, action: () => { switchDay(d); deleteDay(d); } },
+      ]
+    }));
+  });
 }
 
 function switchDay(d) {
@@ -1203,7 +1424,7 @@ function saveState() {
         unit:     subRows[0]?.unit || 'kg',
         chargeUserEdited: subRows[0]?.chargeUserEdited || false,
         note:     c.querySelector('.ex-note-input').value,
-        conseil:  c.querySelector('.ex-conseil-input') ? c.querySelector('.ex-conseil-input').value : '',
+        conseil:  c.querySelector('.ex-conseil-input') ? c.querySelector('.ex-conseil-input').value : '',   // retour client
         subRows,
       };
     });
@@ -1310,16 +1531,23 @@ function appendExCard(dayIdx, ex) {
     <div class="ex-top">
       <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
       <div class="ex-name-wrap">
-        <input class="ex-name-input" list="${dlId}" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
-          oninput="onExNameInput(this)">
-        <datalist id="${dlId}">${ALL_EX.map(e=>`<option value="${e.name}">`).join('')}</datalist>
+        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
+        <div class="ac-list"></div>
       </div>
       <button class="browse-btn" onclick="openBrowser(this.closest('.ex-card'))">🔍</button>
       <button class="del-btn" onclick="this.closest('.ex-card').remove()">×</button>
     </div>
     <div class="sub-rows" id="subrows-${dlId}"></div>
-    <div class="ex-note-row"><input class="ex-note-input" type="text" placeholder="Ressenti, notes…" value="${ex.note||''}"></div>
-    <input class="ex-conseil-input" type="text" placeholder="Conseil technique…" value="${ex.conseil||''}">`;
+    <div class="ex-line">
+      <span class="ex-line-tag coach">Coach</span>
+      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${ex.note||''}">
+    </div>
+    <div class="ex-line">
+      <span class="ex-line-tag client">Client</span>
+      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${ex.conseil||''}" readonly>
+    </div>`;
 
   list.appendChild(card);
 
@@ -1435,7 +1663,155 @@ function onChargeManualEdit(input) {
   else input.dataset.userEdited = '1';
 }
 
+// ═══════════════════════════════════════════════════
+//  AUTOCOMPLÉTION  (liste maison, fiable sur mobile)
+// ═══════════════════════════════════════════════════
+function acList(input) {
+  const wrap = input.closest('.ex-name-wrap');
+  return wrap ? wrap.querySelector('.ac-list') : null;
+}
+
+function acOpen(input) { acRender(input); }
+
+function acBlur(input) {
+  // délai pour laisser le clic sur un élément se produire
+  setTimeout(() => { const l = acList(input); if (l) l.classList.remove('open'); }, 180);
+}
+
+function acRender(input) {
+  const list = acList(input);
+  if (!list) return;
+  const q = input.value.trim().toLowerCase();
+
+  let res;
+  if (!q) {
+    res = ALL_EX.slice(0, 40);
+  } else {
+    // les exercices commençant par la saisie d'abord, puis ceux qui la contiennent
+    const deb = ALL_EX.filter(e => e.name.toLowerCase().startsWith(q));
+    const mid = ALL_EX.filter(e => !e.name.toLowerCase().startsWith(q) && e.name.toLowerCase().includes(q));
+    res = deb.concat(mid).slice(0, 40);
+  }
+
+  let html = res.map(e => {
+    const col = DB[e.bloc] ? DB[e.bloc].color : 'muscu';
+    return `<div class="ac-item" data-n="${e.name.replace(/"/g,'&quot;')}" data-b="${e.bloc}">`
+         + `<span class="ac-dot browser-ex-dot ${col}"></span>${e.name}</div>`;
+  }).join('');
+
+  // Proposition d'ajout si la saisie ne correspond à aucun exercice connu
+  const exact = q && ALL_EX.some(e => e.name.toLowerCase() === q);
+  if (q && !exact) {
+    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${input.value.trim()} » à la bibliothèque</div>`;
+  }
+
+  if (!html) { list.classList.remove('open'); return; }
+  list.innerHTML = html;
+  list.classList.add('open');
+
+  list.querySelectorAll('.ac-item').forEach(it => {
+    it.onmousedown = e => e.preventDefault();   // empêche le blur avant le clic
+    it.onclick = () => {
+      const card = input.closest('.ex-card');
+      if (it.classList.contains('ac-add')) {
+        list.classList.remove('open');
+        openAddExModal(input.value.trim(), card);
+        return;
+      }
+      input.value = it.dataset.n;
+      updateCardBloc(card, it.dataset.b);
+      refreshLoad(card);
+      list.classList.remove('open');
+      scheduleAutosave();
+    };
+  });
+}
+
+// ── Ajout d'un exercice à la bibliothèque ──
+let pendingAddCard = null, pendingAddName = '';
+
+function openAddExModal(name, card) {
+  pendingAddName = name; pendingAddCard = card;
+  document.getElementById('addex-name').textContent = '« ' + name + ' »';
+  const sel = document.getElementById('addex-cat');
+  let opts = '';
+  Object.entries(DB).forEach(([b, data]) => {
+    if (data.subs) {
+      Object.keys(data.subs).forEach(sub => {
+        opts += `<option value="${b}|${sub}">${data.label} — ${sub}</option>`;
+      });
+    } else {
+      opts += `<option value="${b}|">${data.label}</option>`;
+    }
+  });
+  sel.innerHTML = opts;
+  document.getElementById('addex-modal').classList.add('open');
+}
+
+function closeAddExModal(e) {
+  if (!e || e.target === document.getElementById('addex-modal')) {
+    document.getElementById('addex-modal').classList.remove('open');
+    pendingAddCard = null;
+  }
+}
+
+function confirmAddEx() {
+  const val = document.getElementById('addex-cat').value;
+  if (!val || !pendingAddName) return;
+  const [bloc, sub] = val.split('|');
+
+  // Ajout dans la base, au bon endroit
+  if (sub && DB[bloc].subs) {
+    DB[bloc].subs[sub].push(pendingAddName);
+    DB[bloc].subs[sub].sort((a,b) => a.localeCompare(b,'fr'));
+  } else if (DB[bloc].exercises) {
+    DB[bloc].exercises.push({ n: pendingAddName });
+    DB[bloc].exercises.sort((a,b) => a.n.localeCompare(b.n,'fr'));
+  }
+  ALL_EX.push({ name: pendingAddName, bloc });
+  ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+
+  // Conserve les ajouts d'une session à l'autre
+  try {
+    const custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    custom.push({ name: pendingAddName, bloc, sub: sub || null });
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+
+  if (pendingAddCard) {
+    const input = pendingAddCard.querySelector('.ex-name-input');
+    if (input) input.value = pendingAddName;
+    updateCardBloc(pendingAddCard, bloc);
+    refreshLoad(pendingAddCard);
+  }
+  buildBrowserFull();
+  document.getElementById('addex-modal').classList.remove('open');
+  pendingAddCard = null;
+  doAutosave();
+  showToast('✓ Exercice ajouté');
+}
+
+// Recharge les exercices personnalisés au démarrage
+function loadCustomExercises() {
+  try {
+    const custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    custom.forEach(c => {
+      if (ALL_EX.some(e => e.name === c.name)) return;
+      if (c.sub && DB[c.bloc] && DB[c.bloc].subs && DB[c.bloc].subs[c.sub]) {
+        DB[c.bloc].subs[c.sub].push(c.name);
+        DB[c.bloc].subs[c.sub].sort((a,b) => a.localeCompare(b,'fr'));
+      } else if (DB[c.bloc] && DB[c.bloc].exercises) {
+        DB[c.bloc].exercises.push({ n: c.name });
+        DB[c.bloc].exercises.sort((a,b) => a.n.localeCompare(b.n,'fr'));
+      }
+      ALL_EX.push({ name: c.name, bloc: c.bloc });
+    });
+    ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+  } catch(e) {}
+}
+
 function onExNameInput(input) {
+  acRender(input);
   const card = input.closest('.ex-card');
   // auto-detect bloc from DB
   const val = input.value.trim();

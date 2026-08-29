@@ -2117,14 +2117,23 @@ function scheduleAutosave() {
   autosaveTimer = setTimeout(doAutosave, 600);
 }
 
+let autosaveFailed = false;   // évite de répéter l'alerte à chaque frappe
+
 function doAutosave() {
   if (!autosaveReady || !hasSections()) return;
   try {
     saveState(); syncToSection();
     localStorage.setItem(LS_KEY, JSON.stringify(buildSnapshot()));
     flashSaved();
+    autosaveFailed = false;
   } catch (e) {
     console.warn('Sauvegarde impossible', e);
+    // Stockage plein, navigation privée, quota… : le programme n'est PLUS
+    // enregistré sur cet appareil. On le signale une fois, sans spammer.
+    if (!autosaveFailed) {
+      autosaveFailed = true;
+      showToast('⚠ Sauvegarde impossible — exporte ton JSON');
+    }
   }
 }
 

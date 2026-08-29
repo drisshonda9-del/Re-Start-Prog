@@ -1669,7 +1669,10 @@ function appendSubRow(container, sr, bloc, isAutoLoad) {
   const div = document.createElement('div');
   div.className = 'sub-row';
   const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
-  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
+  const hasAuto = load && load !== '—';
+  const chargeVal = sr.chargeUserEdited && sr.charge
+    ? sr.charge
+    : (hasAuto ? load.replace(' kg','') : (isAutoLoad ? '' : (sr.charge||'')));
   div.innerHTML = `
     <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,sr.sets)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,sr.reps)}</select></div>
@@ -1714,14 +1717,11 @@ function delSubRow(btn) {
 function refreshSubLoad(sel) {
   const row = sel.closest('.sub-row');
   const card = row.closest('.ex-card');
-  const input = row.querySelector('.load-auto');
-  if (!input || input.dataset.userEdited) return;
-  const val = computeAutoLoad({
+  applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
     exercise: card.querySelector('.ex-name-input').value,
     pct: sel.value,
     bloc: card.dataset.bloc
-  });
-  if (val && val !== '—') input.value = val.replace(' kg','');
+  }));
 }
 
 // ═══════════════════════════════════════════════════
@@ -1734,17 +1734,23 @@ function computeAutoLoad(ex) {
   return (Math.round(pr * parseFloat(ex.pct) / 100 * 2) / 2) + ' kg';
 }
 
+// Écrit la charge calculée dans un champ auto — sauf s'il a été saisi à la main.
+// Si le calcul n'est plus possible (pas de %, 1RM absent…), le champ est vidé :
+// une charge automatique périmée ne doit jamais rester affichée (cf. règle §5.1).
+function applyAutoLoad(input, val) {
+  if (!input || input.dataset.userEdited) return;
+  input.value = (val && val !== '—') ? val.replace(' kg','') : '';
+}
+
 function refreshLoad(card) {
   // Refresh all sub-row auto loads when exercise name changes
+  const exName = card.querySelector('.ex-name-input').value;
   card.querySelectorAll('.sub-row').forEach(row => {
-    const input = row.querySelector('.load-auto');
-    if (!input || input.dataset.userEdited) return;
-    const val = computeAutoLoad({
-      exercise: card.querySelector('.ex-name-input').value,
+    applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
+      exercise: exName,
       pct: row.querySelector('.sel-pct').value,
       bloc: card.dataset.bloc
-    });
-    if (val && val !== '—') input.value = val.replace(' kg','');
+    }));
   });
 }
 

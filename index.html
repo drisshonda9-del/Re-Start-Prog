@@ -572,6 +572,15 @@ select option { background: #1a1d25; }
 .week-check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 .week-check-item span { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--text); }
 
+/* ── PORTÉE D'EXPORT (section active / tout le programme) ── */
+.exp-scope-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+  padding: 11px 8px; border-radius: 6px; cursor: pointer;
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.exp-scope-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(194,85,98,0.10); }
+
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
@@ -597,7 +606,7 @@ select option { background: #1a1d25; }
     <label class="btn-header btn-load" title="Charger un programme">
       📂<input type="file" accept=".json" onchange="loadJSON(event)" style="display:none">
     </label>
-    <button class="btn-header btn-pdf" onclick="generatePDF()">PDF</button>
+    <button class="btn-header btn-pdf" onclick="openPdfExport()">PDF</button>
     <button class="btn-header btn-excel" onclick="openExcelModal()">EXCEL</button>
   </div>
 </header>
@@ -660,15 +669,34 @@ select option { background: #1a1d25; }
 <!-- EXCEL WEEK SELECTOR -->
 <div class="modal" id="excel-modal" onclick="closeExcelModal(event)">
   <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
-    <div class="modal-title">Semaines à exporter</div>
-    <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
-      <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
-      <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
+    <div class="modal-title">Export Excel</div>
+    <div id="excel-scope-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <button type="button" id="excel-scope-active" class="exp-scope-btn" onclick="setExcelScope('active')">Section active</button>
+      <button type="button" id="excel-scope-all" class="exp-scope-btn" onclick="setExcelScope('all')">Tout le programme</button>
+    </div>
+    <div id="excel-week-wrap">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:12px">Semaines à exporter</div>
+      <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
+        <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
+        <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
+      </div>
     </div>
     <button onclick="doGenerateExcel()" style="width:100%;background:var(--accent-deep);border:none;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:2px;padding:12px;border-radius:8px;cursor:pointer;margin-bottom:8px">EXPORTER</button>
     <button class="modal-cancel" onclick="closeExcelModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- EXPORT PDF — PORTÉE -->
+<div class="modal" id="pdf-modal" onclick="closePdfModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Export PDF</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
+      <button onclick="runPdfExport('active')" style="background:var(--accent-deep);border:none;color:var(--cream);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Section active</button>
+      <button onclick="runPdfExport('all')" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Tout le programme (<span id="pdf-nsec"></span> sections)</button>
+    </div>
+    <button class="modal-cancel" onclick="closePdfModal()">Annuler</button>
   </div>
 </div>
 
@@ -2278,10 +2306,23 @@ function loadJSON(event) {
 // ═══════════════════════════════════════════════════
 //  EXCEL MODAL
 // ═══════════════════════════════════════════════════
+// Portée d'export : 'active' = section affichée seulement, 'all' = toutes les sections
+let excelScope = 'active';
+function setExcelScope(s) {
+  excelScope = (s === 'all') ? 'all' : 'active';
+  document.getElementById('excel-scope-active').classList.toggle('active', excelScope === 'active');
+  document.getElementById('excel-scope-all').classList.toggle('active', excelScope === 'all');
+  // Les cases « semaines » ne concernent que la section active (chaque section a ses propres semaines).
+  document.getElementById('excel-week-wrap').style.display = excelScope === 'active' ? 'block' : 'none';
+}
+
 function openExcelModal() {
   collectAll();
+  if (!hasProgram()) { showToast('Crée d\'abord un programme'); return; }
+  const multi = sections.length > 1;
+  document.getElementById('excel-scope-row').style.display = multi ? 'grid' : 'none';
+  setExcelScope('active');   // défaut : n'altère pas l'usage actuel
   const nW = nWeeks();
-  if (nW === 0) { showToast('Crée d\'abord un programme'); return; }
   const list = document.getElementById('excel-week-checks');
   list.innerHTML = '';
   for (let i = 0; i < nW; i++) {
@@ -2306,17 +2347,21 @@ function excelSelectCurrent() {
   if (cb) cb.checked = true;
 }
 function doGenerateExcel() {
-  const checks = document.querySelectorAll('#excel-week-checks input:checked');
-  const selected = Array.from(checks).map(c => +c.value);
-  if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
+  let selected = null;
+  if (excelScope === 'active') {
+    const checks = document.querySelectorAll('#excel-week-checks input:checked');
+    selected = Array.from(checks).map(c => +c.value);
+    if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
+  }
   document.getElementById('excel-modal').classList.remove('open');
-  generateExcelWithWeeks(selected);
+  generateExcelExport(excelScope, selected);
 }
 
 // ═══════════════════════════════════════════════════
 //  GENERATE EXCEL — layout vertical, colonnes fixes
 // ═══════════════════════════════════════════════════
-async function generateExcelWithWeeks(selectedWeeks) {
+async function generateExcelExport(scope, selectedWeeks) {
+  collectAll();
   if (!window.ExcelJS) {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
@@ -2354,9 +2399,31 @@ async function generateExcelWithWeeks(selectedWeeks) {
     ({ horizontal:h, vertical:v, wrapText:wrap });
   const bdr  = h => { const s={style:'thin',color:{argb:'FF'+h}}; return {top:s,left:s,bottom:s,right:s}; };
 
-  selectedWeeks.forEach(wIdx => {
-    const ws  = wb.addWorksheet('Semaine '+(wIdx+1));
-    const nD  = nDaysOf(wIdx);
+  // ── Portée : section active seule, ou toutes les sections ──
+  const secList = scope === 'all'
+    ? sections.map((sec, secIdx) => ({ sec, secIdx }))
+    : [{ sec: sections[activeSection], secIdx: activeSection }];
+  const multiSec = scope === 'all' && sections.length > 1;
+  const secName  = (sec, i) => (sec.name && sec.name.trim()) || ('Section ' + (i + 1));
+  // Semaines à sortir pour une section : toutes en mode 'all', la sélection sinon.
+  const weeksFor = sec => scope === 'all'
+    ? sec.weeks.map((_, w) => w)
+    : (selectedWeeks || []).filter(w => w < sec.weeks.length);
+  // Nom d'onglet Excel : ≤ 31 car., sans \ / ? * [ ] :, et unique.
+  const usedSheetNames = new Set();
+  const makeSheetName = (sec, i, wIdx) => {
+    let base = (multiSec ? secName(sec, i) + ' S' + (wIdx + 1) : 'Semaine ' + (wIdx + 1))
+      .replace(/[\\/?*\[\]:]/g, ' ').trim().slice(0, 31) || ('Feuille');
+    let name = base, k = 2;
+    while (usedSheetNames.has(name)) { const suf = ' (' + k + ')'; name = base.slice(0, 31 - suf.length) + suf; k++; }
+    usedSheetNames.add(name);
+    return name;
+  };
+
+  secList.forEach(({ sec, secIdx }) => {
+  weeksFor(sec).forEach(wIdx => {
+    const ws  = wb.addWorksheet(makeSheetName(sec, secIdx, wIdx));
+    const nD  = (sec.weeks[wIdx] || []).length;
 
     // Colonne A plus large pour les noms complets
     [38, 8, 8, 8, 9, 13, 50].forEach((w, i) => { ws.getColumn(i+1).width = w; });
@@ -2372,7 +2439,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
     // ── TITRE ──
     ws.getRow(r).height = 32;
     const tc = ws.getCell(r,1);
-    const secTxt = hasSections() && sections[activeSection].name ? '   ·   '+sections[activeSection].name.toUpperCase() : '';
+    const secTxt = (sec.name && sec.name.trim()) ? '   ·   '+sec.name.toUpperCase() : '';
     tc.value = 'S'+(wIdx+1)+'   '+progName.toUpperCase()+secTxt+(athlete?'   —   '+athlete.toUpperCase():'');
     tc.fill = fill(C.bg); tc.font = fnt(C.accent, true, 15);
     tc.alignment = al('left','middle');
@@ -2387,8 +2454,8 @@ async function generateExcelWithWeeks(selectedWeeks) {
     r++;
 
     for (let d = 0; d < nD; d++) {
-      const dn  = getDayName(wIdx, d);
-      const exs = (weekData[wIdx]&&weekData[wIdx][d]) || [];
+      const dn  = (sec.dayNames[wIdx] && sec.dayNames[wIdx][d]) || '';
+      const exs = (sec.weeks[wIdx] && sec.weeks[wIdx][d]) || [];
 
       // ── DAY header ──
       ws.getRow(r).height = 24;
@@ -2505,9 +2572,14 @@ async function generateExcelWithWeeks(selectedWeeks) {
       r++;
     }
   });
+  });
 
-  const secSuffix = hasSections() && sections[activeSection].name
-    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
+  if (wb.worksheets.length === 0) { showToast('Rien à exporter'); return; }
+
+  const secSuffix = scope === 'all'
+    ? ' - programme complet'
+    : ((sections[activeSection].name && sections[activeSection].name.trim())
+        ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '');
   const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSuffix)+'.xlsx';
   const buf   = await wb.xlsx.writeBuffer();
   const blob  = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2516,10 +2588,30 @@ async function generateExcelWithWeeks(selectedWeeks) {
 }
 
 // ═══════════════════════════════════════════════════
-//  GENERATE PDF// ═══════════════════════════════════════════════════
 //  GENERATE PDF (jsPDF direct download)
 // ═══════════════════════════════════════════════════
-async function generatePDF() {
+function openPdfExport() {
+  collectAll();
+  if (!hasProgram()) { showToast('Cree d\'abord un programme'); return; }
+  if (sections.length > 1) {
+    document.getElementById('pdf-nsec').textContent = sections.length;
+    document.getElementById('pdf-modal').classList.add('open');
+  } else {
+    generatePDF('active');
+  }
+}
+function closePdfModal(e) {
+  if (!e || e.target === document.getElementById('pdf-modal')) {
+    document.getElementById('pdf-modal').classList.remove('open');
+  }
+}
+function runPdfExport(scope) {
+  document.getElementById('pdf-modal').classList.remove('open');
+  generatePDF(scope);
+}
+
+async function generatePDF(scope) {
+  scope = (scope === 'all') ? 'all' : 'active';
   // Load jsPDF if not already loaded
   if (!window.jspdf) {
     await new Promise((res, rej) => {
@@ -2533,14 +2625,21 @@ async function generatePDF() {
   collectAll();
   const progName = document.getElementById('prog-name').value || 'Programme';
   const athlete  = document.getElementById('athlete').value || '';
-  const nW = nWeeks();
-  if (nW === 0) { showToast('Cree d\'abord un programme'); return; }
-  const maxD = Math.max(1, ...weekData.map((_,i)=>nDaysOf(i)));
+  if (!hasProgram()) { showToast('Cree d\'abord un programme'); return; }
+
+  // ── Portée : section active seule, ou toutes les sections ──
+  const secList = scope === 'all'
+    ? sections.map((sec, secIdx) => ({ sec, secIdx }))
+    : [{ sec: sections[activeSection], secIdx: activeSection }];
+  const daysOf    = (sec, w)    => (sec.weeks[w] || []);
+  const dayNameOf = (sec, w, d) => (sec.dayNames[w] && sec.dayNames[w][d]) || '';
+
+  let maxD = 1;
+  secList.forEach(({ sec }) => sec.weeks.forEach(days => { maxD = Math.max(maxD, (days || []).length); }));
 
   // ── jsPDF generation ──
   const { jsPDF } = window.jspdf;
   const BLOC_HEX = {sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105], cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]};
-  const COLS = {sbd:'#4a9eff', halte:'#f5a623', muscu:'#22c069', cardio:'#bf5af2', hyrox:'#c0601a', etire:'#e84d8a'};
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;
@@ -2555,17 +2654,16 @@ async function generatePDF() {
   const chW  = CW * 0.10;
   const noteW = CW - exW - numW*3 - pctW - chW;
 
-  function hex2rgb(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return[r,g,b]; }
 
   // ── Draw page header (repeated on every page) ──
-  function drawPageHeader(wIdx) {
+  function drawPageHeader(sec, wIdx) {
     const y = MT;
     doc.setFillColor(123,32,40);          // bordeaux RE-START
     doc.rect(ML, y, CW, 10, 'F');
     doc.setFont('helvetica','bold');
     doc.setFontSize(13);
     doc.setTextColor(239,231,214);        // creme
-    const secName = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
+    const secName = (sec.name && sec.name.trim()) ? sec.name.toUpperCase() : '';
     doc.text(progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : ''), ML+4, y+6.5);
     if (athlete) {
       doc.setFontSize(8);
@@ -2579,46 +2677,45 @@ async function generatePDF() {
     doc.text('S'+(wIdx+1), PW-MR-10, y+7);
   }
 
-  // ── Compute total content height for a week to derive scale ──
-  function computeWeekHeight(wIdx, rowH, hhH, dayLabelH, dayGapH) {
+  // ── Métriques de base (mm) — servent au calcul d'échelle ET au tracé,
+  //    pour que la hauteur estimée corresponde exactement au rendu. ──
+  const B = { rowH:9, hh:6.5, dayLbl:9, dayGap:8, sep:3, note:4.5 };
+
+  // Hauteur de base d'une semaine, tout compris (sous-lignes, notes, séparateurs).
+  function weekBaseHeight(sec, wIdx) {
     let h = 0;
-    for (let d = 0; d < nDaysOf(wIdx); d++) {
-      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
-      h += dayLabelH + hhH + (exs.length || 1) * rowH + dayGapH;
+    const nD = daysOf(sec, wIdx).length;
+    for (let d = 0; d < nD; d++) {
+      const exs = daysOf(sec, wIdx)[d] || [];
+      h += B.dayLbl + B.hh;
+      if (!exs.length) { h += B.rowH; }
+      else exs.forEach((ex, ei) => {
+        const nSub = (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
+        h += nSub * B.rowH;
+        if ([ex.note, ex.conseil].filter(Boolean).length) h += B.note;
+        if (ei < exs.length - 1) h += B.sep;
+      });
+      h += B.dayGap;
     }
-    return h;
+    return h || B.rowH;
   }
 
   // ── Draw one week scaled to fill the page ──
-  function drawWeek(wIdx) {
+  function drawWeek(sec, wIdx) {
     const HEADER_H = 14;
     const availH = PH - MT - MB - HEADER_H;
 
-    // Count total sub-rows for scaling
-    function totalRows(wIdx) {
-      let n = 0;
-      for (let d = 0; d < nDaysOf(wIdx); d++) {
-        const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
-        if (exs.length === 0) { n += 1; continue; }
-        exs.forEach(ex => {
-          n += (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
-        });
-      }
-      return n;
-    }
+    // Échelle : la hauteur de base tient compte de TOUT le contenu, donc
+    // scale ≤ availH/baseTotal ⇒ le rendu ne dépasse jamais la page.
+    // Le plafond 1.8 ne joue que quand il reste de la place (contenu léger).
+    const scale = Math.min(availH / weekBaseHeight(sec, wIdx), 1.8);
 
-    const baseRowH   = 9;
-    const baseHH     = 6.5;
-    const baseDayLbl = 9;
-    const baseDayGap = 8;
-    const nDw        = Math.max(1, nDaysOf(wIdx));
-    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap) + totalRows(wIdx) * baseRowH;
-    const scale      = Math.min(availH / baseTotal, 1.8);
-
-    const rowH   = baseRowH   * scale;
-    const hh     = baseHH     * scale;
-    const dayLbl = baseDayLbl * scale;
-    const dayGap = baseDayGap * scale;
+    const rowH   = B.rowH   * scale;
+    const hh     = B.hh     * scale;
+    const dayLbl = B.dayLbl * scale;
+    const dayGap = B.dayGap * scale;
+    const sepH   = B.sep    * scale;
+    const noteH  = B.note   * scale;
     const fsSub  = Math.min(9 * scale, 13);
     const fsHdr  = Math.min(7 * scale, 10);
     const fsRow  = Math.min(8 * scale, 11);
@@ -2627,9 +2724,9 @@ async function generatePDF() {
 
     let y = MT + HEADER_H;
 
-    for (let d = 0; d < nDaysOf(wIdx); d++) {
-      const dn  = getDayName(wIdx, d);
-      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+    for (let d = 0; d < daysOf(sec, wIdx).length; d++) {
+      const dn  = dayNameOf(sec, wIdx, d);
+      const exs = daysOf(sec, wIdx)[d] || [];
 
       // DAY label
       doc.setFont('helvetica','bold');
@@ -2691,13 +2788,9 @@ async function generatePDF() {
               doc.rect(ML, y, exW, rowH, 'F');
             }
 
-            // Exercise name + conseil + note (first sub-row only)
+            // Exercise name (first sub-row only) — la note passe sur sa propre ligne
             if (si === 0) {
               const maxW = exW - barW - 5;
-              const subText = [ex.note, ex.conseil].filter(Boolean).join(' — ');
-              const hasSubText = subText.trim().length > 0;
-
-              // Name
               doc.setFont('helvetica','bold');
               doc.setFontSize(fsRow);
               doc.setTextColor(30,30,30);
@@ -2706,21 +2799,7 @@ async function generatePDF() {
                 while (name.length > 2 && doc.getTextWidth(name+'…') > maxW) name = name.slice(0,-1);
                 name += '…';
               }
-              const nameY = hasSubText ? y + rowH*0.38 : ty;
-              doc.text(name, ML+3, nameY);
-
-              // Conseil / note sous le nom
-              if (hasSubText) {
-                doc.setFont('helvetica','normal');
-                doc.setFontSize(Math.max(fsNote*0.85, 6));
-                doc.setTextColor(120,120,120);
-                let sub = subText;
-                if (doc.getTextWidth(sub) > maxW) {
-                  while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxW) sub = sub.slice(0,-1);
-                  sub += '…';
-                }
-                doc.text(sub, ML+3, y + rowH*0.72);
-              }
+              doc.text(name, ML+3, ty);
             }
 
             // Sets Reps RPE %
@@ -2750,13 +2829,31 @@ async function generatePDF() {
             y += rowH;
           }); // end subs.forEach
 
+          // Note / conseil du coach — ligne dédiée, comptée dans l'échelle
+          const detail = [ex.note, ex.conseil].filter(Boolean).join(' — ');
+          if (detail) {
+            doc.setFillColor(255,255,255);
+            doc.rect(ML, y, CW, noteH, 'F');
+            doc.setFont('helvetica','italic');
+            doc.setFontSize(Math.max(fsNote*0.9, 6));
+            doc.setTextColor(120,120,120);
+            let sub = detail;
+            const maxNoteW = CW - 6;
+            if (doc.getTextWidth(sub) > maxNoteW) {
+              while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxNoteW) sub = sub.slice(0,-1);
+              sub += '…';
+            }
+            doc.text(sub, ML+3, y + noteH*0.68);
+            y += noteH;
+          }
+
           // Séparateur entre exercices
           if (ri < exs.length - 1) {
-            y += 1.5;
+            y += sepH/2;
             doc.setDrawColor(180,180,180);
             doc.setLineWidth(0.35);
             doc.line(ML, y, ML+CW, y);
-            y += 1.5;
+            y += sepH/2;
           }
         }); // end exs.forEach
       }
@@ -2771,14 +2868,21 @@ async function generatePDF() {
   }
 
 
-  for (let w = 0; w < nW; w++) {
-    if (w > 0) doc.addPage();
-    drawPageHeader(w);
-    drawWeek(w);
-  }
+  let firstPage = true;
+  secList.forEach(({ sec }) => {
+    sec.weeks.forEach((_, w) => {
+      if (!firstPage) doc.addPage();
+      firstPage = false;
+      drawPageHeader(sec, w);
+      drawWeek(sec, w);
+    });
+  });
+  if (firstPage) { showToast('Rien à exporter'); return; }
 
-  const secSfx = hasSections() && sections[activeSection].name
-    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
+  const secSfx = scope === 'all'
+    ? ' - programme complet'
+    : ((sections[activeSection].name && sections[activeSection].name.trim())
+        ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '');
   const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSfx)+'.pdf';
   doc.save(fname);
   showToast('✓ PDF téléchargé !');

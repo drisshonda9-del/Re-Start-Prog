@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RE-START Programmation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -1033,8 +1033,8 @@ function prRow(exName, bloc, currentValue) {
   const row = document.createElement('div');
   row.className = `pr-row ${bloc}`;
   row.innerHTML = `
-    <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
-    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${exName.replace(/"/g,'&quot;')}" value="${val}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+    <div class="pr-name">${esc(main)}${sub ? `<small>(${esc(sub)})</small>` : ''}</div>
+    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${esc(exName)}" value="${esc(val)}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
   return row;
 }
 
@@ -1106,6 +1106,16 @@ function onPRChange(input) {
 }
 
 function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+// Échappe une chaîne avant insertion dans du HTML (texte ou attribut entre guillemets).
+// Les noms d'exercice, de jour, de section et les commentaires sont librement
+// saisis (ou importés depuis un JSON) : sans ça, un « " » casse un champ et un
+// « <img onerror> » s'exécute.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // Registre des 1RM : source de vérité, indépendante de l'affichage.
 // Un exercice masqué conserve donc sa valeur.
@@ -1243,6 +1253,7 @@ function switchWeek(i){
   activeWeek = i;
   if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
   renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1253,8 +1264,8 @@ let ctxTimer = null, ctxMoved = false;
 function openCtx(x, y, title, items) {
   const menu = document.getElementById('ctx-menu');
   const back = document.getElementById('ctx-backdrop');
-  menu.innerHTML = `<div class="ctx-head">${title}</div>`
-    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${it.label}</button>`).join('');
+  menu.innerHTML = `<div class="ctx-head">${esc(title)}</div>`
+    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${esc(it.label)}</button>`).join('');
   menu.querySelectorAll('.ctx-item').forEach(btn => {
     btn.onclick = () => {
       const it = items[+btn.dataset.i];
@@ -1311,8 +1322,8 @@ function renderSecTabs() {
   let html = '';
   sections.forEach((_, i) => {
     const act = i === activeSection;
-    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
-          + `<span class="sec-label">${sectionLabel(i)}</span>`
+    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${esc(sectionLabel(i))}">`
+          + `<span class="sec-label">${esc(sectionLabel(i))}</span>`
           + (act ? `<span class="sec-menu">⋯</span>` : '')
           + `</button>`;
   });
@@ -1352,6 +1363,7 @@ function switchSection(i) {
   saveState(); syncToSection();
   loadSection(i);
   renderSecTabs(); renderTabs(); renderDayTabs(); renderDays(); refreshPRSection();
+  doAutosave();
 }
 
 function addSection() {
@@ -1425,7 +1437,7 @@ function renderDayTabs() {
   for (let d = 0; d < nD; d++) {
     const dn = getDayName(activeWeek, d);
     const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
-    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${esc(label)}">${esc(label)}</button>`;
   }
   html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
   el.innerHTML = html;
@@ -1446,6 +1458,7 @@ function switchDay(d) {
   saveState();
   activeDay = d;
   renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 function openWeekModal() {
@@ -1570,7 +1583,7 @@ function renderDays() {
   card.innerHTML = `
     <div class="day-header">
       <span class="day-label">DAY ${d+1}</span>
-      <input class="day-name-input" type="text" placeholder="Squat / Upper…" id="dn-${d}" value="${dn}" oninput="onDayNameInput()">
+      <input class="day-name-input" type="text" placeholder="Squat / Upper…" id="dn-${d}" value="${esc(dn)}" oninput="onDayNameInput()">
       <button class="day-del" onclick="deleteDay(${d})" title="Supprimer ce jour">×</button>
     </div>
     <div class="ex-list" id="exlist-${d}"></div>
@@ -1622,7 +1635,7 @@ function appendExCard(dayIdx, ex) {
     <div class="ex-top">
       <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
       <div class="ex-name-wrap">
-        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
+        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${esc(ex.exercise)}"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
         <div class="ac-list"></div>
@@ -1633,11 +1646,11 @@ function appendExCard(dayIdx, ex) {
     <div class="sub-rows" id="subrows-${dlId}"></div>
     <div class="ex-line">
       <span class="ex-line-tag coach">Coach</span>
-      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${ex.note||''}">
+      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${esc(ex.note)}">
     </div>
     <div class="ex-line">
       <span class="ex-line-tag client">Client</span>
-      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${ex.conseil||''}" readonly>
+      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${esc(ex.conseil)}" readonly>
     </div>`;
 
   list.appendChild(card);
@@ -1669,7 +1682,10 @@ function appendSubRow(container, sr, bloc, isAutoLoad) {
   const div = document.createElement('div');
   div.className = 'sub-row';
   const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
-  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
+  const hasAuto = load && load !== '—';
+  const chargeVal = sr.chargeUserEdited && sr.charge
+    ? sr.charge
+    : (hasAuto ? load.replace(' kg','') : (isAutoLoad ? '' : (sr.charge||'')));
   div.innerHTML = `
     <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,sr.sets)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,sr.reps)}</select></div>
@@ -1714,14 +1730,11 @@ function delSubRow(btn) {
 function refreshSubLoad(sel) {
   const row = sel.closest('.sub-row');
   const card = row.closest('.ex-card');
-  const input = row.querySelector('.load-auto');
-  if (!input || input.dataset.userEdited) return;
-  const val = computeAutoLoad({
+  applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
     exercise: card.querySelector('.ex-name-input').value,
     pct: sel.value,
     bloc: card.dataset.bloc
-  });
-  if (val && val !== '—') input.value = val.replace(' kg','');
+  }));
 }
 
 // ═══════════════════════════════════════════════════
@@ -1734,17 +1747,23 @@ function computeAutoLoad(ex) {
   return (Math.round(pr * parseFloat(ex.pct) / 100 * 2) / 2) + ' kg';
 }
 
+// Écrit la charge calculée dans un champ auto — sauf s'il a été saisi à la main.
+// Si le calcul n'est plus possible (pas de %, 1RM absent…), le champ est vidé :
+// une charge automatique périmée ne doit jamais rester affichée (cf. règle §5.1).
+function applyAutoLoad(input, val) {
+  if (!input || input.dataset.userEdited) return;
+  input.value = (val && val !== '—') ? val.replace(' kg','') : '';
+}
+
 function refreshLoad(card) {
   // Refresh all sub-row auto loads when exercise name changes
+  const exName = card.querySelector('.ex-name-input').value;
   card.querySelectorAll('.sub-row').forEach(row => {
-    const input = row.querySelector('.load-auto');
-    if (!input || input.dataset.userEdited) return;
-    const val = computeAutoLoad({
-      exercise: card.querySelector('.ex-name-input').value,
+    applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
+      exercise: exName,
       pct: row.querySelector('.sel-pct').value,
       bloc: card.dataset.bloc
-    });
-    if (val && val !== '—') input.value = val.replace(' kg','');
+    }));
   });
 }
 
@@ -1786,14 +1805,14 @@ function acRender(input) {
 
   let html = res.map(e => {
     const col = DB[e.bloc] ? DB[e.bloc].color : 'muscu';
-    return `<div class="ac-item" data-n="${e.name.replace(/"/g,'&quot;')}" data-b="${e.bloc}">`
-         + `<span class="ac-dot browser-ex-dot ${col}"></span>${e.name}</div>`;
+    return `<div class="ac-item" data-n="${esc(e.name)}" data-b="${esc(e.bloc)}">`
+         + `<span class="ac-dot browser-ex-dot ${col}"></span>${esc(e.name)}</div>`;
   }).join('');
 
   // Proposition d'ajout si la saisie ne correspond à aucun exercice connu
   const exact = q && ALL_EX.some(e => e.name.toLowerCase() === q);
   if (q && !exact) {
-    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${input.value.trim()} » à la bibliothèque</div>`;
+    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${esc(input.value.trim())} » à la bibliothèque</div>`;
   }
 
   if (!html) { list.classList.remove('open'); return; }
@@ -1986,7 +2005,7 @@ function buildBrowserFull() {
 function makeExRow(name, bloc, color) {
   const div = document.createElement('div');
   div.className = 'browser-ex';
-  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${name}`;
+  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${esc(name)}`;
   div.onclick = () => selectExFromBrowser(name, bloc);
   return div;
 }
@@ -2098,14 +2117,23 @@ function scheduleAutosave() {
   autosaveTimer = setTimeout(doAutosave, 600);
 }
 
+let autosaveFailed = false;   // évite de répéter l'alerte à chaque frappe
+
 function doAutosave() {
   if (!autosaveReady || !hasSections()) return;
   try {
     saveState(); syncToSection();
     localStorage.setItem(LS_KEY, JSON.stringify(buildSnapshot()));
     flashSaved();
+    autosaveFailed = false;
   } catch (e) {
     console.warn('Sauvegarde impossible', e);
+    // Stockage plein, navigation privée, quota… : le programme n'est PLUS
+    // enregistré sur cet appareil. On le signale une fois, sans spammer.
+    if (!autosaveFailed) {
+      autosaveFailed = true;
+      showToast('⚠ Sauvegarde impossible — exporte ton JSON');
+    }
   }
 }
 

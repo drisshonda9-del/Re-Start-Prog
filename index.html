@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RE-START Programmation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -449,7 +449,7 @@ select option { background: #1a1d25; }
 .del-btn:active { color: var(--danger); }
 
 /* grid: sets reps rpe % charge */
-.ex-grid { display: grid; grid-template-columns: repeat(5,1fr); border-bottom: 1px solid var(--border); }
+.ex-grid { display: grid; grid-template-columns: repeat(6,1fr); border-bottom: 1px solid var(--border); }
 .ex-cell { padding: 5px 6px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
 .ex-cell:last-child { border-right: none; }
 .cell-lbl { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
@@ -491,7 +491,7 @@ select option { background: #1a1d25; }
 .sub-rows { border-top: 1px solid var(--border); }
 .sub-row {
   display: grid;
-  grid-template-columns: 0.8fr 0.8fr 0.8fr 0.9fr 1.7fr 26px;
+  grid-template-columns: 0.62fr 0.62fr 0.52fr 0.62fr 1.55fr 0.85fr 24px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   align-items: center;
 }
@@ -572,15 +572,6 @@ select option { background: #1a1d25; }
 .week-check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 .week-check-item span { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--text); }
 
-/* ── PORTÉE D'EXPORT (section active / tout le programme) ── */
-.exp-scope-btn {
-  background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
-  padding: 11px 8px; border-radius: 6px; cursor: pointer;
-  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.exp-scope-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(194,85,98,0.10); }
-
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
@@ -606,7 +597,7 @@ select option { background: #1a1d25; }
     <label class="btn-header btn-load" title="Charger un programme">
       📂<input type="file" accept=".json" onchange="loadJSON(event)" style="display:none">
     </label>
-    <button class="btn-header btn-pdf" onclick="openPdfExport()">PDF</button>
+    <button class="btn-header btn-pdf" onclick="generatePDF()">PDF</button>
     <button class="btn-header btn-excel" onclick="openExcelModal()">EXCEL</button>
   </div>
 </header>
@@ -669,34 +660,15 @@ select option { background: #1a1d25; }
 <!-- EXCEL WEEK SELECTOR -->
 <div class="modal" id="excel-modal" onclick="closeExcelModal(event)">
   <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
-    <div class="modal-title">Export Excel</div>
-    <div id="excel-scope-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <button type="button" id="excel-scope-active" class="exp-scope-btn" onclick="setExcelScope('active')">Section active</button>
-      <button type="button" id="excel-scope-all" class="exp-scope-btn" onclick="setExcelScope('all')">Tout le programme</button>
-    </div>
-    <div id="excel-week-wrap">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:12px">Semaines à exporter</div>
-      <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
-        <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
-        <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
-      </div>
+    <div class="modal-title">Semaines à exporter</div>
+    <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
+      <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
+      <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
     </div>
     <button onclick="doGenerateExcel()" style="width:100%;background:var(--accent-deep);border:none;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:2px;padding:12px;border-radius:8px;cursor:pointer;margin-bottom:8px">EXPORTER</button>
     <button class="modal-cancel" onclick="closeExcelModal()">Annuler</button>
-  </div>
-</div>
-
-<!-- EXPORT PDF — PORTÉE -->
-<div class="modal" id="pdf-modal" onclick="closePdfModal(event)">
-  <div class="modal-sheet">
-    <div class="modal-title">Export PDF</div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px">
-      <button onclick="runPdfExport('active')" style="background:var(--accent-deep);border:none;color:var(--cream);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Section active</button>
-      <button onclick="runPdfExport('all')" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:15px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Tout le programme (<span id="pdf-nsec"></span> sections)</button>
-    </div>
-    <button class="modal-cancel" onclick="closePdfModal()">Annuler</button>
   </div>
 </div>
 
@@ -1061,8 +1033,8 @@ function prRow(exName, bloc, currentValue) {
   const row = document.createElement('div');
   row.className = `pr-row ${bloc}`;
   row.innerHTML = `
-    <div class="pr-name">${esc(main)}${sub ? `<small>(${esc(sub)})</small>` : ''}</div>
-    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${esc(exName)}" value="${esc(val)}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+    <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
+    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${exName.replace(/"/g,'&quot;')}" value="${val}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
   return row;
 }
 
@@ -1134,16 +1106,6 @@ function onPRChange(input) {
 }
 
 function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
-
-// Échappe une chaîne avant insertion dans du HTML (texte ou attribut entre guillemets).
-// Les noms d'exercice, de jour, de section et les commentaires sont librement
-// saisis (ou importés depuis un JSON) : sans ça, un « " » casse un champ et un
-// « <img onerror> » s'exécute.
-function esc(s){
-  return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
 
 // Registre des 1RM : source de vérité, indépendante de l'affichage.
 // Un exercice masqué conserve donc sa valeur.
@@ -1281,7 +1243,6 @@ function switchWeek(i){
   activeWeek = i;
   if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
   renderTabs(); renderDayTabs(); renderDays();
-  doAutosave();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1292,8 +1253,8 @@ let ctxTimer = null, ctxMoved = false;
 function openCtx(x, y, title, items) {
   const menu = document.getElementById('ctx-menu');
   const back = document.getElementById('ctx-backdrop');
-  menu.innerHTML = `<div class="ctx-head">${esc(title)}</div>`
-    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${esc(it.label)}</button>`).join('');
+  menu.innerHTML = `<div class="ctx-head">${title}</div>`
+    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${it.label}</button>`).join('');
   menu.querySelectorAll('.ctx-item').forEach(btn => {
     btn.onclick = () => {
       const it = items[+btn.dataset.i];
@@ -1350,8 +1311,8 @@ function renderSecTabs() {
   let html = '';
   sections.forEach((_, i) => {
     const act = i === activeSection;
-    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${esc(sectionLabel(i))}">`
-          + `<span class="sec-label">${esc(sectionLabel(i))}</span>`
+    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
+          + `<span class="sec-label">${sectionLabel(i)}</span>`
           + (act ? `<span class="sec-menu">⋯</span>` : '')
           + `</button>`;
   });
@@ -1391,7 +1352,6 @@ function switchSection(i) {
   saveState(); syncToSection();
   loadSection(i);
   renderSecTabs(); renderTabs(); renderDayTabs(); renderDays(); refreshPRSection();
-  doAutosave();
 }
 
 function addSection() {
@@ -1465,7 +1425,7 @@ function renderDayTabs() {
   for (let d = 0; d < nD; d++) {
     const dn = getDayName(activeWeek, d);
     const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
-    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${esc(label)}">${esc(label)}</button>`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
   }
   html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
   el.innerHTML = html;
@@ -1486,7 +1446,6 @@ function switchDay(d) {
   saveState();
   activeDay = d;
   renderDayTabs(); renderDays();
-  doAutosave();
 }
 
 function openWeekModal() {
@@ -1541,6 +1500,7 @@ function saveState() {
         reps:  sr.querySelector('.sel-reps').value,
         rpe:   sr.querySelector('.sel-rpe').value,
         pct:   sr.querySelector('.sel-pct').value,
+        rest:  sr.querySelector('.sel-rest') ? sr.querySelector('.sel-rest').value : '',
         charge: sr.querySelector('.cell-charge-input') ? sr.querySelector('.cell-charge-input').value : '',
         unit:   sr.querySelector('.unit-select') ? sr.querySelector('.unit-select').value : 'kg',
         chargeUserEdited: sr.querySelector('.load-auto') ? !!sr.querySelector('.load-auto').dataset.userEdited : false,
@@ -1552,6 +1512,7 @@ function saveState() {
         reps:     subRows[0]?.reps || '',
         rpe:      subRows[0]?.rpe  || '',
         pct:      subRows[0]?.pct  || '',
+        rest:     subRows[0]?.rest || '',
         charge:   subRows[0]?.charge || '',
         unit:     subRows[0]?.unit || 'kg',
         chargeUserEdited: subRows[0]?.chargeUserEdited || false,
@@ -1611,7 +1572,7 @@ function renderDays() {
   card.innerHTML = `
     <div class="day-header">
       <span class="day-label">DAY ${d+1}</span>
-      <input class="day-name-input" type="text" placeholder="Squat / Upper…" id="dn-${d}" value="${esc(dn)}" oninput="onDayNameInput()">
+      <input class="day-name-input" type="text" placeholder="Squat / Upper…" id="dn-${d}" value="${dn}" oninput="onDayNameInput()">
       <button class="day-del" onclick="deleteDay(${d})" title="Supprimer ce jour">×</button>
     </div>
     <div class="ex-list" id="exlist-${d}"></div>
@@ -1657,13 +1618,13 @@ function appendExCard(dayIdx, ex) {
   const dlId = `dl-${dayIdx}-${Math.random().toString(36).slice(2,8)}`;
 
   // Build first sub-row (main row)
-  const subRows = ex.subRows && ex.subRows.length > 0 ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
+  const subRows = ex.subRows && ex.subRows.length > 0 ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,rest:ex.rest,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
 
   card.innerHTML = `
     <div class="ex-top">
       <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
       <div class="ex-name-wrap">
-        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${esc(ex.exercise)}"
+        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
         <div class="ac-list"></div>
@@ -1674,11 +1635,11 @@ function appendExCard(dayIdx, ex) {
     <div class="sub-rows" id="subrows-${dlId}"></div>
     <div class="ex-line">
       <span class="ex-line-tag coach">Coach</span>
-      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${esc(ex.note)}">
+      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${ex.note||''}">
     </div>
     <div class="ex-line">
       <span class="ex-line-tag client">Client</span>
-      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${esc(ex.conseil)}" readonly>
+      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${ex.conseil||''}" readonly>
     </div>`;
 
   list.appendChild(card);
@@ -1710,16 +1671,14 @@ function appendSubRow(container, sr, bloc, isAutoLoad) {
   const div = document.createElement('div');
   div.className = 'sub-row';
   const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
-  const hasAuto = load && load !== '—';
-  const chargeVal = sr.chargeUserEdited && sr.charge
-    ? sr.charge
-    : (hasAuto ? load.replace(' kg','') : (isAutoLoad ? '' : (sr.charge||'')));
+  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
   div.innerHTML = `
     <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,sr.sets)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,sr.reps)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,sr.rpe)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts(sr.pct)}</select></div>
     <div class="sub-cell">${chargeCellHTML(bloc, sr, chargeVal)}</div>
+    <div class="sub-cell"><span class="cell-lbl">Repos</span><select class="cell-sel sel-rest">${restOpts(sr.rest)}</select></div>
     <div class="sub-cell">
       <button class="btn-add-subrow" onclick="addSubRow(this)" title="Ajouter série">＋</button>
       <button class="btn-del-subrow" onclick="delSubRow(this)" title="Supprimer">−</button>
@@ -1733,7 +1692,7 @@ function addSubRow(btn) {
   const card = container.closest('.ex-card');
   const bloc = card.dataset.bloc;
   const isAutoLoad = bloc==='sbd'||bloc==='halte';
-  const newRow = {sets:'3',reps:'5',rpe:'7',pct:'',charge:''};
+  const newRow = {sets:'3',reps:'5',rpe:'7',pct:'',rest:'',charge:''};
   const div = document.createElement('div');
   div.className = 'sub-row';
   div.innerHTML = `
@@ -1742,6 +1701,7 @@ function addSubRow(btn) {
     <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,newRow.rpe)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts('')}</select></div>
     <div class="sub-cell">${chargeCellHTML(bloc, newRow, '')}</div>
+    <div class="sub-cell"><span class="cell-lbl">Repos</span><select class="cell-sel sel-rest">${restOpts('')}</select></div>
     <div class="sub-cell">
       <button class="btn-add-subrow" onclick="addSubRow(this)">＋</button>
       <button class="btn-del-subrow" onclick="delSubRow(this)">−</button>
@@ -1758,11 +1718,14 @@ function delSubRow(btn) {
 function refreshSubLoad(sel) {
   const row = sel.closest('.sub-row');
   const card = row.closest('.ex-card');
-  applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
+  const input = row.querySelector('.load-auto');
+  if (!input || input.dataset.userEdited) return;
+  const val = computeAutoLoad({
     exercise: card.querySelector('.ex-name-input').value,
     pct: sel.value,
     bloc: card.dataset.bloc
-  }));
+  });
+  if (val && val !== '—') input.value = val.replace(' kg','');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1775,23 +1738,17 @@ function computeAutoLoad(ex) {
   return (Math.round(pr * parseFloat(ex.pct) / 100 * 2) / 2) + ' kg';
 }
 
-// Écrit la charge calculée dans un champ auto — sauf s'il a été saisi à la main.
-// Si le calcul n'est plus possible (pas de %, 1RM absent…), le champ est vidé :
-// une charge automatique périmée ne doit jamais rester affichée (cf. règle §5.1).
-function applyAutoLoad(input, val) {
-  if (!input || input.dataset.userEdited) return;
-  input.value = (val && val !== '—') ? val.replace(' kg','') : '';
-}
-
 function refreshLoad(card) {
   // Refresh all sub-row auto loads when exercise name changes
-  const exName = card.querySelector('.ex-name-input').value;
   card.querySelectorAll('.sub-row').forEach(row => {
-    applyAutoLoad(row.querySelector('.load-auto'), computeAutoLoad({
-      exercise: exName,
+    const input = row.querySelector('.load-auto');
+    if (!input || input.dataset.userEdited) return;
+    const val = computeAutoLoad({
+      exercise: card.querySelector('.ex-name-input').value,
       pct: row.querySelector('.sel-pct').value,
       bloc: card.dataset.bloc
-    }));
+    });
+    if (val && val !== '—') input.value = val.replace(' kg','');
   });
 }
 
@@ -1833,14 +1790,14 @@ function acRender(input) {
 
   let html = res.map(e => {
     const col = DB[e.bloc] ? DB[e.bloc].color : 'muscu';
-    return `<div class="ac-item" data-n="${esc(e.name)}" data-b="${esc(e.bloc)}">`
-         + `<span class="ac-dot browser-ex-dot ${col}"></span>${esc(e.name)}</div>`;
+    return `<div class="ac-item" data-n="${e.name.replace(/"/g,'&quot;')}" data-b="${e.bloc}">`
+         + `<span class="ac-dot browser-ex-dot ${col}"></span>${e.name}</div>`;
   }).join('');
 
   // Proposition d'ajout si la saisie ne correspond à aucun exercice connu
   const exact = q && ALL_EX.some(e => e.name.toLowerCase() === q);
   if (q && !exact) {
-    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${esc(input.value.trim())} » à la bibliothèque</div>`;
+    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${input.value.trim()} » à la bibliothèque</div>`;
   }
 
   if (!html) { list.classList.remove('open'); return; }
@@ -2033,7 +1990,7 @@ function buildBrowserFull() {
 function makeExRow(name, bloc, color) {
   const div = document.createElement('div');
   div.className = 'browser-ex';
-  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${esc(name)}`;
+  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${name}`;
   div.onclick = () => selectExFromBrowser(name, bloc);
   return div;
 }
@@ -2080,6 +2037,20 @@ function opts(min, max, sel) {
   for (let i=min;i<=max;i++) o+=`<option value="${i}"${String(sel)===String(i)?' selected':''}>${i}</option>`;
   return o;
 }
+// Repos : de 15 s en 15 s jusqu'à 5 min, puis paliers plus larges
+function restOpts(sel) {
+  let o = '<option value="">—</option>';
+  for (let sec = 15; sec <= 300; sec += 15) {
+    const m = Math.floor(sec/60), r = sec % 60;
+    const lbl = m === 0 ? sec+'s' : (r === 0 ? m+':00' : m+':'+String(r).padStart(2,'0'));
+    o += `<option value="${lbl}"${String(sel)===lbl?' selected':''}>${lbl}</option>`;
+  }
+  ['6:00','7:00','8:00','10:00'].forEach(v => {
+    o += `<option value="${v}"${String(sel)===v?' selected':''}>${v}</option>`;
+  });
+  return o;
+}
+
 function pctOpts(sel) {
   let o = '<option value="">—</option>';
   for (let p=30;p<=100;p+=2.5){
@@ -2145,23 +2116,14 @@ function scheduleAutosave() {
   autosaveTimer = setTimeout(doAutosave, 600);
 }
 
-let autosaveFailed = false;   // évite de répéter l'alerte à chaque frappe
-
 function doAutosave() {
   if (!autosaveReady || !hasSections()) return;
   try {
     saveState(); syncToSection();
     localStorage.setItem(LS_KEY, JSON.stringify(buildSnapshot()));
     flashSaved();
-    autosaveFailed = false;
   } catch (e) {
     console.warn('Sauvegarde impossible', e);
-    // Stockage plein, navigation privée, quota… : le programme n'est PLUS
-    // enregistré sur cet appareil. On le signale une fois, sans spammer.
-    if (!autosaveFailed) {
-      autosaveFailed = true;
-      showToast('⚠ Sauvegarde impossible — exporte ton JSON');
-    }
   }
 }
 
@@ -2306,23 +2268,10 @@ function loadJSON(event) {
 // ═══════════════════════════════════════════════════
 //  EXCEL MODAL
 // ═══════════════════════════════════════════════════
-// Portée d'export : 'active' = section affichée seulement, 'all' = toutes les sections
-let excelScope = 'active';
-function setExcelScope(s) {
-  excelScope = (s === 'all') ? 'all' : 'active';
-  document.getElementById('excel-scope-active').classList.toggle('active', excelScope === 'active');
-  document.getElementById('excel-scope-all').classList.toggle('active', excelScope === 'all');
-  // Les cases « semaines » ne concernent que la section active (chaque section a ses propres semaines).
-  document.getElementById('excel-week-wrap').style.display = excelScope === 'active' ? 'block' : 'none';
-}
-
 function openExcelModal() {
   collectAll();
-  if (!hasProgram()) { showToast('Crée d\'abord un programme'); return; }
-  const multi = sections.length > 1;
-  document.getElementById('excel-scope-row').style.display = multi ? 'grid' : 'none';
-  setExcelScope('active');   // défaut : n'altère pas l'usage actuel
   const nW = nWeeks();
+  if (nW === 0) { showToast('Crée d\'abord un programme'); return; }
   const list = document.getElementById('excel-week-checks');
   list.innerHTML = '';
   for (let i = 0; i < nW; i++) {
@@ -2347,21 +2296,17 @@ function excelSelectCurrent() {
   if (cb) cb.checked = true;
 }
 function doGenerateExcel() {
-  let selected = null;
-  if (excelScope === 'active') {
-    const checks = document.querySelectorAll('#excel-week-checks input:checked');
-    selected = Array.from(checks).map(c => +c.value);
-    if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
-  }
+  const checks = document.querySelectorAll('#excel-week-checks input:checked');
+  const selected = Array.from(checks).map(c => +c.value);
+  if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
   document.getElementById('excel-modal').classList.remove('open');
-  generateExcelExport(excelScope, selected);
+  generateExcelWithWeeks(selected);
 }
 
 // ═══════════════════════════════════════════════════
 //  GENERATE EXCEL — layout vertical, colonnes fixes
 // ═══════════════════════════════════════════════════
-async function generateExcelExport(scope, selectedWeeks) {
-  collectAll();
+async function generateExcelWithWeeks(selectedWeeks) {
   if (!window.ExcelJS) {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
@@ -2399,34 +2344,12 @@ async function generateExcelExport(scope, selectedWeeks) {
     ({ horizontal:h, vertical:v, wrapText:wrap });
   const bdr  = h => { const s={style:'thin',color:{argb:'FF'+h}}; return {top:s,left:s,bottom:s,right:s}; };
 
-  // ── Portée : section active seule, ou toutes les sections ──
-  const secList = scope === 'all'
-    ? sections.map((sec, secIdx) => ({ sec, secIdx }))
-    : [{ sec: sections[activeSection], secIdx: activeSection }];
-  const multiSec = scope === 'all' && sections.length > 1;
-  const secName  = (sec, i) => (sec.name && sec.name.trim()) || ('Section ' + (i + 1));
-  // Semaines à sortir pour une section : toutes en mode 'all', la sélection sinon.
-  const weeksFor = sec => scope === 'all'
-    ? sec.weeks.map((_, w) => w)
-    : (selectedWeeks || []).filter(w => w < sec.weeks.length);
-  // Nom d'onglet Excel : ≤ 31 car., sans \ / ? * [ ] :, et unique.
-  const usedSheetNames = new Set();
-  const makeSheetName = (sec, i, wIdx) => {
-    let base = (multiSec ? secName(sec, i) + ' S' + (wIdx + 1) : 'Semaine ' + (wIdx + 1))
-      .replace(/[\\/?*\[\]:]/g, ' ').trim().slice(0, 31) || ('Feuille');
-    let name = base, k = 2;
-    while (usedSheetNames.has(name)) { const suf = ' (' + k + ')'; name = base.slice(0, 31 - suf.length) + suf; k++; }
-    usedSheetNames.add(name);
-    return name;
-  };
-
-  secList.forEach(({ sec, secIdx }) => {
-  weeksFor(sec).forEach(wIdx => {
-    const ws  = wb.addWorksheet(makeSheetName(sec, secIdx, wIdx));
-    const nD  = (sec.weeks[wIdx] || []).length;
+  selectedWeeks.forEach(wIdx => {
+    const ws  = wb.addWorksheet('Semaine '+(wIdx+1));
+    const nD  = nDaysOf(wIdx);
 
     // Colonne A plus large pour les noms complets
-    [38, 8, 8, 8, 9, 13, 50].forEach((w, i) => { ws.getColumn(i+1).width = w; });
+    [40, 7, 7, 6, 7, 13, 8, 48].forEach((w, i) => { ws.getColumn(i+1).width = w; });
 
     ws.pageSetup = {
       orientation:'landscape', fitToPage:true,
@@ -2439,23 +2362,23 @@ async function generateExcelExport(scope, selectedWeeks) {
     // ── TITRE ──
     ws.getRow(r).height = 32;
     const tc = ws.getCell(r,1);
-    const secTxt = (sec.name && sec.name.trim()) ? '   ·   '+sec.name.toUpperCase() : '';
+    const secTxt = hasSections() && sections[activeSection].name ? '   ·   '+sections[activeSection].name.toUpperCase() : '';
     tc.value = 'S'+(wIdx+1)+'   '+progName.toUpperCase()+secTxt+(athlete?'   —   '+athlete.toUpperCase():'');
     tc.fill = fill(C.bg); tc.font = fnt(C.accent, true, 15);
     tc.alignment = al('left','middle');
-    ws.mergeCells(r,1,r,7); r++;
+    ws.mergeCells(r,1,r,8); r++;
 
     // Ligne accent
     ws.getRow(r).height = 3;
-    for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.deep);
+    for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.deep);
     r++;
     ws.getRow(r).height = 10;
-    for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.bg);
+    for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.bg);
     r++;
 
     for (let d = 0; d < nD; d++) {
-      const dn  = (sec.dayNames[wIdx] && sec.dayNames[wIdx][d]) || '';
-      const exs = (sec.weeks[wIdx] && sec.weeks[wIdx][d]) || [];
+      const dn  = getDayName(wIdx, d);
+      const exs = (weekData[wIdx]&&weekData[wIdx][d]) || [];
 
       // ── DAY header ──
       ws.getRow(r).height = 24;
@@ -2463,23 +2386,23 @@ async function generateExcelExport(scope, selectedWeeks) {
       dc.value = 'DAY '+(d+1)+(dn?'   '+dn.toUpperCase():'');
       dc.fill = fill(C.surface2); dc.font = fnt(C.text, true, 12);
       dc.alignment = al('left','middle');
-      ws.mergeCells(r,1,r,7); r++;
+      ws.mergeCells(r,1,r,8); r++;
 
       // ── En-têtes colonnes ──
       ws.getRow(r).height = 15;
-      ['EXERCICE','SETS','REPS','RPE','%','CHARGE','COMMENTAIRES'].forEach((h,i) => {
+      ['EXERCICE','SETS','REPS','RPE','%','CHARGE','REPOS','COMMENTAIRES'].forEach((h,i) => {
         const c = ws.getCell(r,i+1);
         c.value = h;
         c.fill  = fill(C.surface);
         c.font  = fnt(C.muted, true, 8);
-        c.alignment = al(i===0||i===6?'left':'center','middle');
+        c.alignment = al(i===0||i===7?'left':'center','middle');
         c.border = bdr(C.border);
       });
       r++;
 
       if (exs.length===0) {
         ws.getRow(r).height = 18;
-        for (let i=1;i<=7;i++) { ws.getCell(r,i).fill=fill(C.surface); ws.getCell(r,i).border=bdr(C.border); }
+        for (let i=1;i<=8;i++) { ws.getCell(r,i).fill=fill(C.surface); ws.getCell(r,i).border=bdr(C.border); }
         r++;
       } else {
         exs.forEach((ex, ei) => {
@@ -2489,7 +2412,7 @@ async function generateExcelExport(scope, selectedWeeks) {
           const isLastEx = ei===exs.length-1;
           const subs   = (ex.subRows&&ex.subRows.length)
             ? ex.subRows
-            : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,
+            : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,rest:ex.rest,
                 charge:ex.charge,unit:ex.unit,chargeUserEdited:ex.chargeUserEdited}];
           const detail = [ex.note,ex.conseil].filter(Boolean).join(' — ');
 
@@ -2528,8 +2451,16 @@ async function generateExcelExport(scope, selectedWeeks) {
             chc.alignment = al('center','middle');
             chc.border = bdr(C.border);
 
-            // Col G — Commentaires vide
-            const gc = ws.getCell(r,7);
+            // Col G — Repos
+            const rc = ws.getCell(r,7);
+            rc.value = sr.rest || '';
+            rc.fill  = fill(C.surface);
+            rc.font  = fnt(C.text, false, 10);
+            rc.alignment = al('center','middle');
+            rc.border = bdr(C.border);
+
+            // Col H — Commentaires vide
+            const gc = ws.getCell(r,8);
             gc.value = '';
             gc.fill  = fill(C.surface2);
             gc.font  = fnt(C.muted, false, 10);
@@ -2548,7 +2479,7 @@ async function generateExcelExport(scope, selectedWeeks) {
             nc.font  = fnt(C.muted, false, 8, true);
             nc.alignment = al('left','middle',true);
             nc.border = bdr(C.border);
-            for (let i=2;i<=7;i++) {
+            for (let i=2;i<=8;i++) {
               ws.getCell(r,i).fill = fill(C.surface);
               ws.getCell(r,i).border = bdr(C.border);
             }
@@ -2558,7 +2489,7 @@ async function generateExcelExport(scope, selectedWeeks) {
           // Séparateur fin entre exercices
           if (!isLastEx) {
             ws.getRow(r).height = 3;
-            for (let i=1;i<=7;i++) {
+            for (let i=1;i<=8;i++) {
               ws.getCell(r,i).fill = fill(C.surface2);
             }
             r++;
@@ -2568,18 +2499,13 @@ async function generateExcelExport(scope, selectedWeeks) {
 
       // Espace entre jours
       ws.getRow(r).height = 14;
-      for (let i=1;i<=7;i++) ws.getCell(r,i).fill = fill(C.bg);
+      for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.bg);
       r++;
     }
   });
-  });
 
-  if (wb.worksheets.length === 0) { showToast('Rien à exporter'); return; }
-
-  const secSuffix = scope === 'all'
-    ? ' - programme complet'
-    : ((sections[activeSection].name && sections[activeSection].name.trim())
-        ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '');
+  const secSuffix = hasSections() && sections[activeSection].name
+    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
   const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSuffix)+'.xlsx';
   const buf   = await wb.xlsx.writeBuffer();
   const blob  = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2588,30 +2514,10 @@ async function generateExcelExport(scope, selectedWeeks) {
 }
 
 // ═══════════════════════════════════════════════════
+//  GENERATE PDF// ═══════════════════════════════════════════════════
 //  GENERATE PDF (jsPDF direct download)
 // ═══════════════════════════════════════════════════
-function openPdfExport() {
-  collectAll();
-  if (!hasProgram()) { showToast('Cree d\'abord un programme'); return; }
-  if (sections.length > 1) {
-    document.getElementById('pdf-nsec').textContent = sections.length;
-    document.getElementById('pdf-modal').classList.add('open');
-  } else {
-    generatePDF('active');
-  }
-}
-function closePdfModal(e) {
-  if (!e || e.target === document.getElementById('pdf-modal')) {
-    document.getElementById('pdf-modal').classList.remove('open');
-  }
-}
-function runPdfExport(scope) {
-  document.getElementById('pdf-modal').classList.remove('open');
-  generatePDF(scope);
-}
-
-async function generatePDF(scope) {
-  scope = (scope === 'all') ? 'all' : 'active';
+async function generatePDF() {
   // Load jsPDF if not already loaded
   if (!window.jspdf) {
     await new Promise((res, rej) => {
@@ -2625,21 +2531,14 @@ async function generatePDF(scope) {
   collectAll();
   const progName = document.getElementById('prog-name').value || 'Programme';
   const athlete  = document.getElementById('athlete').value || '';
-  if (!hasProgram()) { showToast('Cree d\'abord un programme'); return; }
-
-  // ── Portée : section active seule, ou toutes les sections ──
-  const secList = scope === 'all'
-    ? sections.map((sec, secIdx) => ({ sec, secIdx }))
-    : [{ sec: sections[activeSection], secIdx: activeSection }];
-  const daysOf    = (sec, w)    => (sec.weeks[w] || []);
-  const dayNameOf = (sec, w, d) => (sec.dayNames[w] && sec.dayNames[w][d]) || '';
-
-  let maxD = 1;
-  secList.forEach(({ sec }) => sec.weeks.forEach(days => { maxD = Math.max(maxD, (days || []).length); }));
+  const nW = nWeeks();
+  if (nW === 0) { showToast('Cree d\'abord un programme'); return; }
+  const maxD = Math.max(1, ...weekData.map((_,i)=>nDaysOf(i)));
 
   // ── jsPDF generation ──
   const { jsPDF } = window.jspdf;
   const BLOC_HEX = {sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105], cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]};
+  const COLS = {sbd:'#4a9eff', halte:'#f5a623', muscu:'#22c069', cardio:'#bf5af2', hyrox:'#c0601a', etire:'#e84d8a'};
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;
@@ -2647,23 +2546,26 @@ async function generatePDF(scope) {
   const CW = PW - ML - MR; // 186mm
 
   // col widths: exercice, sets, reps, rpe, %, charge, ressenti
-  const nDFactor = maxD <= 3 ? 0.34 : maxD === 4 ? 0.30 : 0.25;
-  const exW  = CW * nDFactor;
-  const numW = CW * 0.07;
-  const pctW = CW * 0.08;
-  const chW  = CW * 0.10;
-  const noteW = CW - exW - numW*3 - pctW - chW;
+  const nDFactor = maxD <= 3 ? 0.34 : maxD === 4 ? 0.31 : 0.27;
+  const exW   = CW * nDFactor;
+  const numW  = CW * 0.055;   // sets, reps
+  const rpeW  = CW * 0.048;   // RPE : un chiffre
+  const pctW  = CW * 0.058;   // %
+  const chW   = CW * 0.095;
+  const restW = CW * 0.068;
+  const noteW = CW - exW - numW*2 - rpeW - pctW - chW - restW;
 
+  function hex2rgb(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return[r,g,b]; }
 
   // ── Draw page header (repeated on every page) ──
-  function drawPageHeader(sec, wIdx) {
+  function drawPageHeader(wIdx) {
     const y = MT;
     doc.setFillColor(123,32,40);          // bordeaux RE-START
     doc.rect(ML, y, CW, 10, 'F');
     doc.setFont('helvetica','bold');
     doc.setFontSize(13);
     doc.setTextColor(239,231,214);        // creme
-    const secName = (sec.name && sec.name.trim()) ? sec.name.toUpperCase() : '';
+    const secName = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
     doc.text(progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : ''), ML+4, y+6.5);
     if (athlete) {
       doc.setFontSize(8);
@@ -2677,45 +2579,52 @@ async function generatePDF(scope) {
     doc.text('S'+(wIdx+1), PW-MR-10, y+7);
   }
 
-  // ── Métriques de base (mm) — servent au calcul d'échelle ET au tracé,
-  //    pour que la hauteur estimée corresponde exactement au rendu. ──
-  const B = { rowH:9, hh:6.5, dayLbl:9, dayGap:8, sep:3, note:4.5 };
-
-  // Hauteur de base d'une semaine, tout compris (sous-lignes, notes, séparateurs).
-  function weekBaseHeight(sec, wIdx) {
+  // ── Compute total content height for a week to derive scale ──
+  function computeWeekHeight(wIdx, rowH, hhH, dayLabelH, dayGapH) {
     let h = 0;
-    const nD = daysOf(sec, wIdx).length;
-    for (let d = 0; d < nD; d++) {
-      const exs = daysOf(sec, wIdx)[d] || [];
-      h += B.dayLbl + B.hh;
-      if (!exs.length) { h += B.rowH; }
-      else exs.forEach((ex, ei) => {
-        const nSub = (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
-        h += nSub * B.rowH;
-        if ([ex.note, ex.conseil].filter(Boolean).length) h += B.note;
-        if (ei < exs.length - 1) h += B.sep;
-      });
-      h += B.dayGap;
+    for (let d = 0; d < nDaysOf(wIdx); d++) {
+      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+      h += dayLabelH + hhH + (exs.length || 1) * rowH + dayGapH;
     }
-    return h || B.rowH;
+    return h;
   }
 
   // ── Draw one week scaled to fill the page ──
-  function drawWeek(sec, wIdx) {
+  function drawWeek(wIdx) {
     const HEADER_H = 14;
     const availH = PH - MT - MB - HEADER_H;
 
-    // Échelle : la hauteur de base tient compte de TOUT le contenu, donc
-    // scale ≤ availH/baseTotal ⇒ le rendu ne dépasse jamais la page.
-    // Le plafond 1.8 ne joue que quand il reste de la place (contenu léger).
-    const scale = Math.min(availH / weekBaseHeight(sec, wIdx), 1.8);
+    // Count total sub-rows for scaling
+    function totalRows(wIdx) {
+      let n = 0;
+      for (let d = 0; d < nDaysOf(wIdx); d++) {
+        const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+        if (exs.length === 0) { n += 1; continue; }
+        exs.forEach(ex => {
+          n += (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
+        });
+      }
+      return n;
+    }
 
-    const rowH   = B.rowH   * scale;
-    const hh     = B.hh     * scale;
-    const dayLbl = B.dayLbl * scale;
-    const dayGap = B.dayGap * scale;
-    const sepH   = B.sep    * scale;
-    const noteH  = B.note   * scale;
+    const baseRowH   = 9;
+    const baseHH     = 6.5;
+    const baseDayLbl = 9;
+    const baseDayGap = 8;
+    const nDw        = Math.max(1, nDaysOf(wIdx));
+    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap) + totalRows(wIdx) * baseRowH;
+    // Lisibilité : la police du tableau ne descend jamais sous 8 pt.
+    // fsRow = 8 * scale, donc scale ne peut pas passer sous 1.
+    // Au-delà, le document passe à la page suivante plutôt que de rétrécir.
+    // Le facteur 0,97 évite que l'agrandissement remplisse la page au millimètre près.
+    const MIN_SCALE  = 1.0;
+    const raw        = (availH / baseTotal) * 0.97;
+    const scale      = Math.max(MIN_SCALE, Math.min(raw, 1.5));
+
+    const rowH   = baseRowH   * scale;
+    const hh     = baseHH     * scale;
+    const dayLbl = baseDayLbl * scale;
+    const dayGap = baseDayGap * scale;
     const fsSub  = Math.min(9 * scale, 13);
     const fsHdr  = Math.min(7 * scale, 10);
     const fsRow  = Math.min(8 * scale, 11);
@@ -2724,9 +2633,18 @@ async function generatePDF(scope) {
 
     let y = MT + HEADER_H;
 
-    for (let d = 0; d < daysOf(sec, wIdx).length; d++) {
-      const dn  = dayNameOf(sec, wIdx, d);
-      const exs = daysOf(sec, wIdx)[d] || [];
+    for (let d = 0; d < nDaysOf(wIdx); d++) {
+      const dn  = getDayName(wIdx, d);
+      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
+
+      // Hauteur nécessaire pour ce jour — saut de page si la place manque
+      const nRows  = exs.reduce((a,ex) => a + ((ex.subRows&&ex.subRows.length)?ex.subRows.length:1), 0) || 1;
+      const needed = dayLbl + hh + nRows*rowH + dayGap;
+      if (y + needed > PH - MB + 0.5 && d > 0) {
+        doc.addPage();
+        drawPageHeader(wIdx);
+        y = MT + HEADER_H;
+      }
 
       // DAY label
       doc.setFont('helvetica','bold');
@@ -2748,10 +2666,10 @@ async function generatePDF(scope) {
       doc.setFontSize(fsHdr);
       doc.setTextColor(210,210,210);
       let x = ML;
-      const headers = ['EXERCICE','SETS','REPS','RPE','%','CHARGE','RESSENTI'];
-      const widths  = [exW, numW, numW, numW, pctW, chW, noteW];
+      const headers = ['EXERCICE','SETS','REPS','RPE','%','CHARGE','REPOS','RESSENTI'];
+      const widths  = [exW, numW, numW, rpeW, pctW, chW, restW, noteW];
       headers.forEach((h,i) => {
-        doc.text(h, x+(i===0||i===6?1.5:widths[i]/2), y+hh*0.65, {align:i===0||i===6?'left':'center'});
+        doc.text(h, x+(i===0||i===7?1.5:widths[i]/2), y+hh*0.65, {align:i===0||i===7?'left':'center'});
         x += widths[i];
       });
       const tableStartY = y;
@@ -2788,9 +2706,13 @@ async function generatePDF(scope) {
               doc.rect(ML, y, exW, rowH, 'F');
             }
 
-            // Exercise name (first sub-row only) — la note passe sur sa propre ligne
+            // Exercise name + conseil + note (first sub-row only)
             if (si === 0) {
               const maxW = exW - barW - 5;
+              const subText = [ex.note, ex.conseil].filter(Boolean).join(' — ');
+              const hasSubText = subText.trim().length > 0;
+
+              // Name
               doc.setFont('helvetica','bold');
               doc.setFontSize(fsRow);
               doc.setTextColor(30,30,30);
@@ -2799,7 +2721,21 @@ async function generatePDF(scope) {
                 while (name.length > 2 && doc.getTextWidth(name+'…') > maxW) name = name.slice(0,-1);
                 name += '…';
               }
-              doc.text(name, ML+3, ty);
+              const nameY = hasSubText ? y + rowH*0.38 : ty;
+              doc.text(name, ML+3, nameY);
+
+              // Conseil / note sous le nom
+              if (hasSubText) {
+                doc.setFont('helvetica','normal');
+                doc.setFontSize(Math.max(fsNote*0.85, 6));
+                doc.setTextColor(120,120,120);
+                let sub = subText;
+                if (doc.getTextWidth(sub) > maxW) {
+                  while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxW) sub = sub.slice(0,-1);
+                  sub += '…';
+                }
+                doc.text(sub, ML+3, y + rowH*0.72);
+              }
             }
 
             // Sets Reps RPE %
@@ -2808,7 +2744,7 @@ async function generatePDF(scope) {
             doc.setTextColor(50,50,50);
             let cx = ML + exW;
             [sr.sets||'', sr.reps||'', sr.rpe||'', sr.pct?sr.pct+'%':''].forEach((v,i) => {
-              const ww = [numW,numW,numW,pctW][i];
+              const ww = [numW,numW,rpeW,pctW][i];
               doc.text(String(v), cx+ww/2, ty, {align:'center'});
               cx += ww;
             });
@@ -2824,36 +2760,25 @@ async function generatePDF(scope) {
             doc.text(String(chFinal), cx+chW/2, ty, {align:'center'});
             cx += chW;
 
+            // Repos
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(fsRow);
+            doc.setTextColor(60,60,60);
+            doc.text(String(sr.rest||''), cx+restW/2, ty, {align:'center'});
+            cx += restW;
+
             // Ressenti — vide, pas de ligne
 
             y += rowH;
           }); // end subs.forEach
 
-          // Note / conseil du coach — ligne dédiée, comptée dans l'échelle
-          const detail = [ex.note, ex.conseil].filter(Boolean).join(' — ');
-          if (detail) {
-            doc.setFillColor(255,255,255);
-            doc.rect(ML, y, CW, noteH, 'F');
-            doc.setFont('helvetica','italic');
-            doc.setFontSize(Math.max(fsNote*0.9, 6));
-            doc.setTextColor(120,120,120);
-            let sub = detail;
-            const maxNoteW = CW - 6;
-            if (doc.getTextWidth(sub) > maxNoteW) {
-              while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxNoteW) sub = sub.slice(0,-1);
-              sub += '…';
-            }
-            doc.text(sub, ML+3, y + noteH*0.68);
-            y += noteH;
-          }
-
           // Séparateur entre exercices
           if (ri < exs.length - 1) {
-            y += sepH/2;
+            y += 1.5;
             doc.setDrawColor(180,180,180);
             doc.setLineWidth(0.35);
             doc.line(ML, y, ML+CW, y);
-            y += sepH/2;
+            y += 1.5;
           }
         }); // end exs.forEach
       }
@@ -2868,21 +2793,14 @@ async function generatePDF(scope) {
   }
 
 
-  let firstPage = true;
-  secList.forEach(({ sec }) => {
-    sec.weeks.forEach((_, w) => {
-      if (!firstPage) doc.addPage();
-      firstPage = false;
-      drawPageHeader(sec, w);
-      drawWeek(sec, w);
-    });
-  });
-  if (firstPage) { showToast('Rien à exporter'); return; }
+  for (let w = 0; w < nW; w++) {
+    if (w > 0) doc.addPage();
+    drawPageHeader(w);
+    drawWeek(w);
+  }
 
-  const secSfx = scope === 'all'
-    ? ' - programme complet'
-    : ((sections[activeSection].name && sections[activeSection].name.trim())
-        ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '');
+  const secSfx = hasSections() && sections[activeSection].name
+    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
   const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSfx)+'.pdf';
   doc.save(fname);
   showToast('✓ PDF téléchargé !');

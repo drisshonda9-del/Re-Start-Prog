@@ -2554,27 +2554,62 @@ async function generatePDF() {
 
   // ── jsPDF generation ──
   const { jsPDF } = window.jspdf;
-  const BLOC_HEX = {sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105], cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]};
-  const COLS = {sbd:'#4a9eff', halte:'#f5a623', muscu:'#22c069', cardio:'#bf5af2', hyrox:'#c0601a', etire:'#e84d8a'};
+  // ═══════════════════════════════════════════════════════════════
+  //  MISE EN PAGE DU PDF
+  //  Un seul modèle de mesure (measureExercise / measureDay) sert au
+  //  calcul d'échelle, au dessin et aux sauts de page — plus de double
+  //  comptabilité, plus de troncature des consignes.
+  // ═══════════════════════════════════════════════════════════════
+  const BLOC_HEX = {
+    sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105],
+    cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]
+  };
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;
   const ML = 12, MR = 12, MT = 14, MB = 14;
-  const CW = PW - ML - MR; // 186mm
+  const CW = PW - ML - MR;              // 186 mm
+  const HEADER_H = 14;                  // bandeau bordeaux + respiration
+  const PAGE_TOP = MT + HEADER_H;       // ordonnée du 1er contenu
+  const PAGE_BOT = PH - MB;             // limite basse
+  const AVAIL_H  = PAGE_BOT - PAGE_TOP; // hauteur utile par page
 
-  // col widths: exercice, sets, reps, rpe, %, charge, ressenti
-  const nDFactor = maxD <= 3 ? 0.34 : maxD === 4 ? 0.31 : 0.27;
-  const exW   = CW * nDFactor;
-  const numW  = CW * 0.055;   // sets, reps
-  const rpeW  = CW * 0.048;   // RPE : un chiffre
-  const pctW  = CW * 0.058;   // %
-  const chW   = CW * 0.095;
-  const restW = CW * 0.068;
-  const noteW = CW - exW - numW*2 - rpeW - pctW - chW - restW;
+  // ── Colonnes ── la colonne « exercice » s'élargit s'il y a peu de jours
+  const nameFactor = maxD <= 3 ? 0.34 : maxD === 4 ? 0.31 : 0.27;
+  const exW   = CW * nameFactor;
+  const numW  = CW * 0.055;             // séries, reps
+  const rpeW  = CW * 0.048;             // RPE
+  const pctW  = CW * 0.058;             // %
+  const chW   = CW * 0.095;             // charge
+  const restW = CW * 0.068;             // repos
+  const noteW = CW - exW - numW*2 - rpeW - pctW - chW - restW;  // ressenti (main libre)
+  const COLW    = [exW, numW, numW, rpeW, pctW, chW, restW, noteW];
+  const HEADERS = ['EXERCICE','SÉRIES','REPS','RPE','%','CHARGE','REPOS','RESSENTI'];
 
-  function hex2rgb(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return[r,g,b]; }
+  // ── Typographie ── pt → mm, hauteur de ligne, tailles de référence.
+  //  Plancher de lisibilité : le tableau ne descend jamais sous 8 pt,
+  //  donc l'échelle ne passe jamais sous 8/9.
+  const ptmm  = pt => pt * 0.352777;
+  const lineH = (pt, k) => ptmm(pt) * (k || 1.15);
+  const BASE  = { name:9, note:7.5, row:9, hdr:7.5, day:11 };
+  const MIN_SCALE  = 8 / 9;
+  const BASE_ROW_H = 6.5;               // hauteur d'une ligne de série (échelle 1)
+  const CELL_PAD   = 1.6;               // marge verticale dans la cellule exercice
+  const SPINE_W    = 1.5;               // liseré coloré du bloc
+  const EX_SEP     = 2.2;               // filet entre deux exercices (échelle 1)
+  const DAY_GAP    = 6;                 // respiration après un jour (échelle 1)
 
-  // ── Draw page header (repeated on every page) ──
+  const fontsAt = sc => ({
+    name: BASE.name * sc,
+    note: Math.max(BASE.note * sc, 6),
+    row:  BASE.row  * sc,
+    hdr:  Math.max(BASE.hdr * sc, 6),
+    day:  BASE.day  * sc,
+  });
+  const dayHeadHAt   = sc => lineH(fontsAt(sc).day, 1.6);
+  const tableHeadHAt = sc => Math.max(lineH(fontsAt(sc).hdr, 2.2), 5 * sc);
+
+  // ── En-tête de page (répété sur chaque page) ──
   function drawPageHeader(wIdx) {
     const y = MT;
     doc.setFillColor(123,32,40);          // bordeaux RE-START
@@ -2590,7 +2625,7 @@ async function generatePDF() {
     // Zone réservée au titre : tout l'espace restant avant le numéro
     const titleMax = CW - 8 - wkW - 6;
     const secName  = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
-    let   title    = progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : '');
+    let   title    = progName.toUpperCase() + (secName ? '  ·  ' + secName : '');
 
     // On réduit la police avant de tronquer : le titre reste entier tant que possible
     doc.setFont('helvetica','bold');
@@ -2601,8 +2636,8 @@ async function generatePDF() {
       doc.setFontSize(fsTitle);
     }
     if (doc.getTextWidth(title) > titleMax) {
-      while (title.length > 4 && doc.getTextWidth(title+'\u2026') > titleMax) title = title.slice(0,-1);
-      title += '\u2026';
+      while (title.length > 4 && doc.getTextWidth(title+'…') > titleMax) title = title.slice(0,-1);
+      title += '…';
     }
     doc.setTextColor(239,231,214);
     doc.text(title, ML+4, athlete ? y+5.6 : y+6.5);
@@ -2617,278 +2652,283 @@ async function generatePDF() {
     }
   }
 
-  // ── Découpe nom et consigne en lignes, et mesure la hauteur nécessaire ──
-  // Le nom tient sur 2 lignes maximum, la consigne aussi : au-delà on tronque.
-  function exHead(ex, maxW, fsName, fsNote, lineH) {
+  // ── Mesure d'un exercice : lignes déjà découpées + hauteur du bloc ──
+  //  Nom et consigne sont entièrement repliés (jamais tronqués) ; seul un
+  //  garde-fou à 10 lignes protège d'une consigne dégénérée.
+  function measureExercise(ex, sc) {
+    const f = fontsAt(sc);
+    const innerW = exW - 2 * CELL_PAD - SPINE_W;
+    const rowH   = BASE_ROW_H * sc;
+
     doc.setFont('helvetica','bold');
-    doc.setFontSize(fsName);
-    let nameLines = doc.splitTextToSize(ex.exercise || '', maxW);
-    if (nameLines.length > 2) {
-      nameLines = nameLines.slice(0, 2);
-      let last = nameLines[1];
-      while (last.length > 2 && doc.getTextWidth(last + '\u2026') > maxW) last = last.slice(0, -1);
-      nameLines[1] = last + '\u2026';
-    }
+    doc.setFontSize(f.name);
+    const nameLines = doc.splitTextToSize(ex.exercise || '—', innerW);
 
-    const subText = [ex.note, ex.conseil].filter(Boolean).join(' \u2014 ').trim();
-    let subLines = [];
-    if (subText) {
+    const consigne = [ex.note, ex.conseil].filter(Boolean).join('   —   ').trim();
+    let noteLines = [];
+    if (consigne) {
       doc.setFont('helvetica','normal');
-      doc.setFontSize(fsNote);
-      subLines = doc.splitTextToSize(subText, maxW);
-      if (subLines.length > 2) {
-        subLines = subLines.slice(0, 2);
-        let last = subLines[1];
-        while (last.length > 2 && doc.getTextWidth(last + '\u2026') > maxW) last = last.slice(0, -1);
-        subLines[1] = last + '\u2026';
+      doc.setFontSize(f.note);
+      noteLines = doc.splitTextToSize(consigne, innerW);
+      if (noteLines.length > 10) {          // garde-fou anti-pathologique
+        noteLines = noteLines.slice(0, 10);
+        noteLines[9] = noteLines[9].replace(/\s+\S*$/, '') + ' …';
       }
     }
 
-    const h = nameLines.length * lineH + (subLines.length ? subLines.length * lineH * 0.82 : 0) + lineH * 0.45;
-    return { nameLines, subLines, height: h };
+    const subs = (ex.subRows && ex.subRows.length > 0)
+      ? ex.subRows
+      : [{ sets:ex.sets, reps:ex.reps, rpe:ex.rpe, pct:ex.pct,
+           rest:ex.rest, charge:ex.charge, unit:ex.unit,
+           chargeUserEdited:ex.chargeUserEdited }];
+
+    const nameH = nameLines.length * lineH(f.name);
+    const noteH = noteLines.length ? 1.0 * sc + noteLines.length * lineH(f.note, 1.1) : 0;
+    const headBlockH = CELL_PAD + nameH + noteH + CELL_PAD;
+    const rowsBlockH = subs.length * rowH;
+
+    return { nameLines, noteLines, subs, rowH, f,
+             height: Math.max(headBlockH, rowsBlockH) };
   }
 
-  // ── Compute total content height for a week to derive scale ──
-  function computeWeekHeight(wIdx, rowH, hhH, dayLabelH, dayGapH) {
-    let h = 0;
-    for (let d = 0; d < nDaysOf(wIdx); d++) {
-      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
-      h += dayLabelH + hhH + (exs.length || 1) * rowH + dayGapH;
-    }
-    return h;
+  // ── Mesure d'un jour : corps (exercices) + hauteur totale ──
+  function measureDay(exs, sc) {
+    const ms = exs.map(ex => measureExercise(ex, sc));
+    const bodyH = ms.length
+      ? ms.reduce((a, m) => a + m.height, 0) + (ms.length - 1) * EX_SEP * sc
+      : BASE_ROW_H * sc;
+    return { ms, bodyH, height: dayHeadHAt(sc) + tableHeadHAt(sc) + bodyH };
   }
 
-  // ── Draw one week scaled to fill the page ──
+  // ── Dessine une semaine ──
   function drawWeek(wIdx) {
-    const HEADER_H = 14;
-    const availH = PH - MT - MB - HEADER_H;
-
-    // Count total sub-rows for scaling
-    function totalRows(wIdx) {
-      let n = 0;
-      for (let d = 0; d < nDaysOf(wIdx); d++) {
-        const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
-        if (exs.length === 0) { n += 1; continue; }
-        exs.forEach(ex => {
-          n += (ex.subRows && ex.subRows.length > 0) ? ex.subRows.length : 1;
-        });
-      }
-      return n;
-    }
-
-    const baseRowH   = 9;
-    const baseHH     = 6.5;
-    const baseDayLbl = 9;
-    const baseDayGap = 8;
-    const nDw        = Math.max(1, nDaysOf(wIdx));
-    // Les noms longs et les consignes occupent plus d'une ligne : on majore
-    // le volume estimé pour que l'échelle ne surestime pas la place disponible.
-    let longEx = 0;
-    for (let d = 0; d < nDaysOf(wIdx); d++) {
-      ((weekData[wIdx] && weekData[wIdx][d]) || []).forEach(ex => {
-        const n   = (ex.subRows && ex.subRows.length) ? ex.subRows.length : 1;
-        const txt = (ex.exercise||'').length + [ex.note, ex.conseil].filter(Boolean).join(' ').length;
-        if (n === 1 && txt > 45) longEx += 1;      // ~1 ligne de plus
-        else if (txt > 90)       longEx += 0.5;
+    const nD = nDaysOf(wIdx);
+    const days = [];
+    for (let d = 0; d < nD; d++) {
+      days.push({
+        idx:  d,
+        name: getDayName(wIdx, d),
+        exs:  (weekData[wIdx] && weekData[wIdx][d]) || [],
       });
     }
-    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap)
-                     + (totalRows(wIdx) + longEx) * baseRowH;
-    // Lisibilité : la police du tableau ne descend jamais sous 8 pt.
-    // fsRow = 8 * scale, donc scale ne peut pas passer sous 1.
-    // Au-delà, le document passe à la page suivante plutôt que de rétrécir.
-    // Le facteur 0,97 évite que l'agrandissement remplisse la page au millimètre près.
-    const MIN_SCALE  = 1.0;
-    const raw        = (availH / baseTotal) * 0.97;
-    const scale      = Math.max(MIN_SCALE, Math.min(raw, 1.5));
 
-    const rowH   = baseRowH   * scale;
-    const hh     = baseHH     * scale;
-    const dayLbl = baseDayLbl * scale;
-    const dayGap = baseDayGap * scale;
-    const fsSub  = Math.min(9 * scale, 13);
-    const fsHdr  = Math.min(7 * scale, 10);
-    const fsRow  = Math.min(8 * scale, 11);
-    const fsNote = Math.min(7 * scale, 9);
-    const barW   = 2 * scale;
-
-    let y = MT + HEADER_H;
-
-    for (let d = 0; d < nDaysOf(wIdx); d++) {
-      const dn  = getDayName(wIdx, d);
-      const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
-
-      // Hauteur nécessaire pour ce jour — saut de page si la place manque
-      const bodyH  = exs.length
-        ? exs.reduce((a,ex) => {
-            const n = (ex.subRows && ex.subRows.length) ? ex.subRows.length : 1;
-            return a + Math.max(n*rowH, exHead(ex, exW-6, fsRow, Math.max(fsNote*0.9,6), fsRow*0.42).height) + 3;
-          }, 0)
-        : rowH;
-      const needed = dayLbl + hh + bodyH + dayGap;
-      if (y + needed > PH - MB + 0.5 && d > 0) {
-        doc.addPage();
-        drawPageHeader(wIdx);
-        y = MT + HEADER_H;
+    // 1) Échelle : 1 si la semaine tient sur une page. Sinon on réduit
+    //    jusqu'à ce que le jour le plus haut tienne, sans passer sous 8 pt.
+    //    Au-delà, on paginera (un jour trop long est coupé entre deux
+    //    exercices, jamais en leur milieu).
+    const weekH = d => d.reduce((a, m) => a + m.height, 0)
+                     + Math.max(0, days.length - 1) * DAY_GAP;
+    let sc = 1;
+    let dm = days.map(dy => measureDay(dy.exs, sc));
+    if (weekH(dm) > AVAIL_H) {
+      // Trop de contenu : on réduit jusqu'à ce que le jour le plus haut
+      // tienne dans une page, sans jamais passer sous 8 pt (au-delà, on
+      // paginera et un jour trop long sera coupé entre deux exercices).
+      let tallest = Math.max.apply(null, dm.map(m => m.height));
+      while (tallest > AVAIL_H && sc > MIN_SCALE + 1e-4) {
+        sc = Math.max(MIN_SCALE, sc - 0.02);
+        dm = days.map(dy => measureDay(dy.exs, sc));
+        tallest = Math.max.apply(null, dm.map(m => m.height));
       }
+    } else {
+      // La semaine tient sur une page : on agrandit un peu pour occuper
+      // la feuille, sans excès (× 1,25 max) ni débordement.
+      const MAX_SCALE = 1.25;
+      while (sc < MAX_SCALE - 1e-4) {
+        const next = Math.min(MAX_SCALE, sc + 0.02);
+        const nd = days.map(dy => measureDay(dy.exs, next));
+        if (weekH(nd) > AVAIL_H) break;
+        sc = next; dm = nd;
+      }
+    }
+    days.forEach((dy, i) => { dy.m = dm[i]; });
 
-      // DAY label
+    const f          = fontsAt(sc);
+    const dayHeadH   = dayHeadHAt(sc);
+    const tableHeadH = tableHeadHAt(sc);
+    const rowFloor   = BASE_ROW_H * sc;
+    const exSep      = EX_SEP * sc;
+    const dayGap     = DAY_GAP * sc;
+
+    let y = PAGE_TOP;
+    let frameTop = 0;   // haut du tableau courant (pour le cadre)
+
+    function pageBreak() {
+      doc.addPage();
+      drawPageHeader(wIdx);
+      y = PAGE_TOP;
+    }
+
+    function drawDayLabel(dy, cont) {
+      const midY = y + dayHeadH * 0.5;
       doc.setFont('helvetica','bold');
-      doc.setFontSize(fsSub);
+      doc.setFontSize(f.day);
       doc.setTextColor(17,17,17);
-      doc.text('DAY '+(d+1), ML, y+dayLbl*0.65);
-      if (dn) {
+      const label = 'DAY ' + (dy.idx + 1);
+      doc.text(label, ML, midY, { baseline:'middle' });
+      let lx = ML + doc.getTextWidth(label) + 2.5;
+      if (dy.name) {
         doc.setFont('helvetica','normal');
-        doc.setFontSize(fsSub*0.85);
+        doc.setFontSize(f.day * 0.8);
         doc.setTextColor(120,120,120);
-        doc.text('— '+dn.toUpperCase(), ML + doc.getTextWidth('DAY '+(d+1)) + 2, y+dayLbl*0.65);
+        const nm = '— ' + dy.name.toUpperCase();
+        doc.text(nm, lx, midY, { baseline:'middle' });
+        lx += doc.getTextWidth(nm) + 2.5;
       }
-      y += dayLbl;
-
-      // Table header — fond sombre texte blanc
-      doc.setFillColor(45,45,45);
-      doc.rect(ML, y, CW, hh, 'F');
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(fsHdr);
-      doc.setTextColor(210,210,210);
-      let x = ML;
-      const headers = ['EXERCICE','SETS','REPS','RPE','%','CHARGE','REPOS','RESSENTI'];
-      const widths  = [exW, numW, numW, rpeW, pctW, chW, restW, noteW];
-      headers.forEach((h,i) => {
-        doc.text(h, x+(i===0||i===7?1.5:widths[i]/2), y+hh*0.65, {align:i===0||i===7?'left':'center'});
-        x += widths[i];
-      });
-      const tableStartY = y;
-      y += hh;
-
-      // Rows
-      if (exs.length === 0) {
-        doc.setFillColor(255,255,255);
-        doc.rect(ML, y, CW, rowH, 'F');
-        doc.setFontSize(fsRow);
-        doc.setTextColor(200,200,200);
-        doc.text('—', ML+CW/2, y+rowH*0.65, {align:'center'});
-        y += rowH;
-      } else {
-        exs.forEach((ex, ri) => {
-          const isAuto  = ex.bloc==='sbd'||ex.bloc==='halte';
-          const blocRgb = BLOC_HEX[ex.bloc] || [170,170,170];
-          const subs    = (ex.subRows && ex.subRows.length > 0) ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
-          const bgBase  = ri%2===0 ? 255 : 250;
-
-          // Hauteur totale de l'exercice : au moins ses sous-lignes,
-          // davantage si le nom ou la consigne demandent plusieurs lignes.
-          const exHeight = Math.max(
-            subs.length * rowH,
-            exHead(ex, exW - 6, fsRow, Math.max(fsNote*0.9, 6), fsRow*0.42).height
-          );
-          const exTop    = y;
-          const subH     = exHeight / subs.length;   // les sous-lignes se répartissent la hauteur
-
-          subs.forEach((sr, si) => {
-            const ty = y + subH*0.62;
-            const srCh = sr.chargeUserEdited && sr.charge
-              ? sr.charge+' kg'
-              : (isAuto ? computeAutoLoad({exercise:ex.exercise, pct:sr.pct, bloc:ex.bloc}) : (sr.charge?sr.charge+' kg':''));
-
-            // Fond blanc de la ligne
-            doc.setFillColor(255,255,255);
-            doc.rect(ML, y, CW, subH, 'F');
-
-            // Filet léger entre deux sous-lignes du même exercice
-            if (si > 0) {
-              doc.setDrawColor(228,228,228);
-              doc.setLineWidth(0.15);
-              doc.line(ML+exW, y, ML+CW, y);
-            }
-
-            // Colonne exercice — fond gris sur toute la hauteur de l'exercice
-            if (si === 0) {
-              doc.setFillColor(245,245,245);
-              doc.rect(ML, exTop, exW, exHeight, 'F');
-            }
-
-            // Nom de l'exercice et consigne — première sous-ligne uniquement
-            if (si === 0) {
-              const maxW  = exW - 6;
-              const lineH = fsRow * 0.42;
-              const head  = exHead(ex, maxW, fsRow, Math.max(fsNote*0.9, 6), lineH);
-
-              // Le bloc nom + consigne se cale en haut de l'exercice.
-              // Sur un exercice à une seule ligne, on le centre légèrement pour l'équilibre.
-              let ty2 = (subs.length === 1)
-                ? y + Math.max(lineH * 0.95, (exHeight - head.height) / 2 + lineH * 0.85)
-                : y + lineH * 1.15;
-
-              doc.setFont('helvetica','bold');
-              doc.setFontSize(fsRow);
-              doc.setTextColor(30,30,30);
-              head.nameLines.forEach(l => { doc.text(l, ML+3, ty2); ty2 += lineH; });
-
-              if (head.subLines.length) {
-                doc.setFont('helvetica','normal');
-                doc.setFontSize(Math.max(fsNote*0.9, 6));
-                doc.setTextColor(120,120,120);
-                ty2 += lineH * 0.12;
-                head.subLines.forEach(l => { doc.text(l, ML+3, ty2); ty2 += lineH * 0.82; });
-              }
-            }
-
-            // Sets Reps RPE %
-            doc.setFont('helvetica','normal');
-            doc.setFontSize(fsRow);
-            doc.setTextColor(50,50,50);
-            let cx = ML + exW;
-            [sr.sets||'', sr.reps||'', sr.rpe||'', sr.pct?sr.pct+'%':''].forEach((v,i) => {
-              const ww = [numW,numW,rpeW,pctW][i];
-              doc.text(String(v), cx+ww/2, ty, {align:'center'});
-              cx += ww;
-            });
-
-            // Charge — noir gras avec unité correcte
-            const srUnit = sr.unit || 'kg';
-            const chVal = String(sr.charge || '').trim();
-            const chFinal = sr.chargeUserEdited && chVal
-              ? chVal+' '+srUnit
-              : (isAuto ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:ex.bloc}) : (chVal ? chVal+' '+srUnit : '\u2014'));
-            doc.setFont('helvetica','bold');
-            doc.setFontSize(fsRow);
-            doc.setTextColor(26,26,26);
-            doc.text(String(chFinal), cx+chW/2, ty, {align:'center'});
-            cx += chW;
-
-            // Repos
-            doc.setFont('helvetica','normal');
-            doc.setFontSize(fsRow);
-            doc.setTextColor(60,60,60);
-            doc.text(String(sr.rest||''), cx+restW/2, ty, {align:'center'});
-            cx += restW;
-
-            // Ressenti — vide, pas de ligne
-
-            y += subH;
-          }); // end subs.forEach
-
-          // Séparateur entre exercices
-          if (ri < exs.length - 1) {
-            y += 1.5;
-            doc.setDrawColor(180,180,180);
-            doc.setLineWidth(0.35);
-            doc.line(ML, y, ML+CW, y);
-            y += 1.5;
-          }
-        }); // end exs.forEach
+      if (cont) {
+        doc.setFont('helvetica','italic');
+        doc.setFontSize(f.day * 0.6);
+        doc.setTextColor(150,150,150);
+        doc.text('(suite)', lx, midY, { baseline:'middle' });
       }
-
-      // Table border
-      doc.setDrawColor(200,200,200);
-      doc.setLineWidth(0.2);
-      doc.rect(ML, tableStartY, CW, y - tableStartY);
-
-      y += dayGap;
+      y += dayHeadH;
     }
-  }
 
+    function drawTableHead() {
+      doc.setFillColor(45,45,45);
+      doc.rect(ML, y, CW, tableHeadH, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(f.hdr);
+      doc.setTextColor(216,216,216);
+      let cx = ML;
+      HEADERS.forEach((h, i) => {
+        const w = COLW[i];
+        const left = i === 0 || i === 7;
+        doc.text(h, cx + (left ? 1.6 : w * 0.5), y + tableHeadH * 0.5,
+                 { align: left ? 'left' : 'center', baseline:'middle' });
+        cx += w;
+      });
+      y += tableHeadH;
+    }
+
+    function closeFrame() {
+      doc.setDrawColor(206,206,206);
+      doc.setLineWidth(0.2);
+      doc.rect(ML, frameTop, CW, y - frameTop);
+      doc.setDrawColor(232,232,232);
+      doc.setLineWidth(0.1);
+      let cx = ML;
+      for (let i = 0; i < COLW.length - 1; i++) {
+        cx += COLW[i];
+        doc.line(cx, frameTop + tableHeadH, cx, y);
+      }
+    }
+
+    function drawExercise(ex, m) {
+      const top    = y;
+      const h      = m.height;
+      const isAuto = ex.bloc === 'sbd' || ex.bloc === 'halte';
+
+      // Cellule exercice : fond gris + liseré coloré du bloc
+      doc.setFillColor(245,245,245);
+      doc.rect(ML, top, exW, h, 'F');
+      const c = BLOC_HEX[ex.bloc] || [170,170,170];
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.rect(ML, top, SPINE_W, h, 'F');
+
+      // Nom + consigne, calés en haut à gauche
+      const tx = ML + SPINE_W + CELL_PAD;
+      let ty = top + CELL_PAD;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(m.f.name);
+      doc.setTextColor(25,25,25);
+      m.nameLines.forEach(l => { doc.text(l, tx, ty, { baseline:'top' }); ty += lineH(m.f.name); });
+      if (m.noteLines.length) {
+        ty += 1.0 * sc;
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(m.f.note);
+        doc.setTextColor(115,115,115);
+        m.noteLines.forEach(l => { doc.text(l, tx, ty, { baseline:'top' }); ty += lineH(m.f.note, 1.1); });
+      }
+
+      // Lignes de séries — hauteur fixe, empilées depuis le haut,
+      // texte centré dans sa bande : les chiffres ne « flottent » jamais.
+      let ry = top;
+      m.subs.forEach((sr, si) => {
+        const midY = ry + m.rowH * 0.5;
+        if (si > 0) {
+          doc.setDrawColor(230,230,230);
+          doc.setLineWidth(0.1);
+          doc.line(ML + exW, ry, ML + CW, ry);
+        }
+        const unit  = sr.unit || 'kg';
+        const chVal = String(sr.charge == null ? '' : sr.charge).trim();
+        let charge;
+        if (sr.chargeUserEdited && chVal) charge = chVal + ' ' + unit;
+        else if (isAuto)                  charge = computeAutoLoad({ exercise: ex.exercise, pct: sr.pct, bloc: ex.bloc });
+        else                              charge = chVal ? chVal + ' ' + unit : '—';
+
+        const vals = ['', sr.sets || '', sr.reps || '', sr.rpe || '',
+                      sr.pct ? sr.pct + '%' : '', charge, sr.rest || '', ''];
+        let cx = ML;
+        vals.forEach((v, ci) => {
+          const w = COLW[ci];
+          if (ci !== 0 && v !== '') {
+            const bold = ci === 5;
+            doc.setFont('helvetica', bold ? 'bold' : 'normal');
+            doc.setFontSize(m.f.row);
+            const g = bold ? 20 : 55;
+            doc.setTextColor(g, g, g);
+            doc.text(String(v), cx + w * 0.5, midY, { align:'center', baseline:'middle' });
+          }
+          cx += w;
+        });
+        ry += m.rowH;
+      });
+
+      y = top + h;
+    }
+
+    function drawDay(dy) {
+      drawDayLabel(dy, false);
+      frameTop = y;
+      drawTableHead();
+
+      if (dy.exs.length === 0) {
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(f.row);
+        doc.setTextColor(190,190,190);
+        doc.text('—', ML + CW * 0.5, y + rowFloor * 0.5, { align:'center', baseline:'middle' });
+        y += rowFloor;
+        closeFrame();
+        return;
+      }
+
+      dy.exs.forEach((ex, ei) => {
+        const m = dy.m.ms[ei];
+        // L'exercice ne tient pas dans la page → coupe ICI (jamais en son
+        // milieu) : on referme le tableau, page suivante, on réaffiche
+        // l'en-tête du jour (« suite ») et celui du tableau.
+        if (y + m.height > PAGE_BOT + 0.5 && y > frameTop + tableHeadH + 0.5) {
+          closeFrame();
+          pageBreak();
+          drawDayLabel(dy, true);
+          frameTop = y;
+          drawTableHead();
+        }
+        drawExercise(ex, m);
+        if (ei < dy.exs.length - 1) {
+          y += exSep * 0.5;
+          doc.setDrawColor(150,150,150);
+          doc.setLineWidth(0.3);
+          doc.line(ML, y, ML + CW, y);
+          y += exSep * 0.5;
+        }
+      });
+      closeFrame();
+    }
+
+    days.forEach((dy, di) => {
+      // Saut de page avant un jour qui ne tient pas dans l'espace restant —
+      // sauf s'il est de toute façon trop grand pour une page entière et
+      // qu'on est déjà en haut de page (il sera coupé entre exercices).
+      if (di > 0 && y + dy.m.height > PAGE_BOT + 0.5) {
+        if (dy.m.height <= AVAIL_H || y > PAGE_TOP + 0.5) pageBreak();
+      }
+      drawDay(dy);
+      y += dayGap;
+    });
+  }
 
   for (let w = 0; w < nW; w++) {
     if (w > 0) doc.addPage();

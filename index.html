@@ -476,7 +476,7 @@ select option { background: #1a1d25; }
 .ex-conseil-input { background: transparent; border: none; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; width: 100%; outline: none; font-style: italic; padding: 5px 10px; }
 .ex-conseil-input::placeholder { color: #2a2d35; }
 .ex-conseil-input:focus { color: var(--accent); }
-.unit-select { background: transparent; border: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; padding: 0 1px; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; text-align: center; }
+.unit-select { width: 28px; flex-shrink: 0; background: transparent; border: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; padding: 0 1px; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer; text-align: center; }
 
 .btn-add-ex {
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -1658,13 +1658,28 @@ function chargeCellHTML(bloc, sr, valueOverride) {
   const isAuto = bloc==='sbd' || bloc==='halte';
   const val    = valueOverride != null ? valueOverride : ((sr && sr.charge) || '');
   const edited = (sr && sr.chargeUserEdited) ? 'data-user-edited="1"' : '';
+  // L'unité reste masquée tant qu'aucune charge n'est saisie
+  const hidden = String(val).trim() === '' ? ' style="display:none"' : '';
   return `<span class="cell-lbl">Charge</span>
     <div style="display:flex;align-items:center;gap:2px">
       <input class="cell-charge-input${isAuto?' load-auto':''}" type="text" inputmode="decimal"
              placeholder="—" value="${val}" ${edited} style="flex:1;min-width:0"
-             ${isAuto?'oninput="onChargeManualEdit(this)"':''}>
-      <select class="unit-select" style="width:28px;flex-shrink:0">${unitOpts(bloc, (sr && sr.unit) || 'kg')}</select>
+             oninput="onChargeInput(this)${isAuto?';onChargeManualEdit(this)':''}">
+      <select class="unit-select"${hidden} data-w="28">${unitOpts(bloc, (sr && sr.unit) || 'kg')}</select>
     </div>`;
+}
+
+// Affiche ou masque l'unité selon que la charge est renseignée
+function toggleUnit(input) {
+  const wrap = input.parentElement;
+  if (!wrap) return;
+  const sel = wrap.querySelector('.unit-select');
+  if (!sel) return;
+  sel.style.display = String(input.value).trim() === '' ? 'none' : '';
+}
+function onChargeInput(input) {
+  toggleUnit(input);
+  scheduleAutosave();
 }
 
 function appendSubRow(container, sr, bloc, isAutoLoad) {
@@ -1726,6 +1741,7 @@ function refreshSubLoad(sel) {
     bloc: card.dataset.bloc
   });
   if (val && val !== '—') input.value = val.replace(' kg','');
+  toggleUnit(input);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1749,6 +1765,7 @@ function refreshLoad(card) {
       bloc: card.dataset.bloc
     });
     if (val && val !== '—') input.value = val.replace(' kg','');
+    toggleUnit(input);
   });
 }
 
@@ -2797,8 +2814,11 @@ async function generatePDF() {
               const lineH = fsRow * 0.42;
               const head  = exHead(ex, maxW, fsRow, Math.max(fsNote*0.9, 6), lineH);
 
-              // Bloc de texte centré verticalement dans la hauteur de l'exercice
-              let ty2 = y + (exHeight - head.height) / 2 + lineH * 0.85;
+              // Le bloc nom + consigne se cale en haut de l'exercice.
+              // Sur un exercice à une seule ligne, on le centre légèrement pour l'équilibre.
+              let ty2 = (subs.length === 1)
+                ? y + Math.max(lineH * 0.95, (exHeight - head.height) / 2 + lineH * 0.85)
+                : y + lineH * 1.15;
 
               doc.setFont('helvetica','bold');
               doc.setFontSize(fsRow);
@@ -2827,9 +2847,10 @@ async function generatePDF() {
 
             // Charge — noir gras avec unité correcte
             const srUnit = sr.unit || 'kg';
-            const chFinal = sr.chargeUserEdited && sr.charge
-              ? sr.charge+' '+srUnit
-              : (isAuto ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:ex.bloc}) : (sr.charge ? sr.charge+' '+srUnit : '—'));
+            const chVal = String(sr.charge || '').trim();
+            const chFinal = sr.chargeUserEdited && chVal
+              ? chVal+' '+srUnit
+              : (isAuto ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:ex.bloc}) : (chVal ? chVal+' '+srUnit : '\u2014'));
             doc.setFont('helvetica','bold');
             doc.setFontSize(fsRow);
             doc.setTextColor(26,26,26);

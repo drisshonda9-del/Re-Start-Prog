@@ -2562,21 +2562,73 @@ async function generatePDF() {
     const y = MT;
     doc.setFillColor(123,32,40);          // bordeaux RE-START
     doc.rect(ML, y, CW, 10, 'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(13);
-    doc.setTextColor(239,231,214);        // creme
-    const secName = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
-    doc.text(progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : ''), ML+4, y+6.5);
-    if (athlete) {
-      doc.setFontSize(8);
-      doc.setFont('helvetica','normal');
-      doc.setTextColor(226,206,196);
-      doc.text(athlete.toUpperCase(), ML+4, y+9.5);
-    }
+    // Numéro de semaine, calé à droite
     doc.setFont('helvetica','bold');
     doc.setFontSize(16);
     doc.setTextColor(239,231,214);
-    doc.text('S'+(wIdx+1), PW-MR-10, y+7);
+    const wkTxt = 'S'+(wIdx+1);
+    const wkW   = doc.getTextWidth(wkTxt);
+    doc.text(wkTxt, PW-MR-4-wkW, y+7);
+
+    // Zone réservée au titre : tout l'espace restant avant le numéro
+    const titleMax = CW - 8 - wkW - 6;
+    const secName  = hasSections() && sections[activeSection].name ? sections[activeSection].name.toUpperCase() : '';
+    let   title    = progName.toUpperCase() + (secName ? '  \u00b7  ' + secName : '');
+
+    // On réduit la police avant de tronquer : le titre reste entier tant que possible
+    doc.setFont('helvetica','bold');
+    let fsTitle = 13;
+    doc.setFontSize(fsTitle);
+    while (fsTitle > 8 && doc.getTextWidth(title) > titleMax) {
+      fsTitle -= 0.5;
+      doc.setFontSize(fsTitle);
+    }
+    if (doc.getTextWidth(title) > titleMax) {
+      while (title.length > 4 && doc.getTextWidth(title+'\u2026') > titleMax) title = title.slice(0,-1);
+      title += '\u2026';
+    }
+    doc.setTextColor(239,231,214);
+    doc.text(title, ML+4, athlete ? y+5.6 : y+6.5);
+
+    if (athlete) {
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(226,206,196);
+      let ath = athlete.toUpperCase();
+      while (ath.length > 2 && doc.getTextWidth(ath) > titleMax) ath = ath.slice(0,-1);
+      doc.text(ath, ML+4, y+8.8);
+    }
+  }
+
+  // ── Découpe nom et consigne en lignes, et mesure la hauteur nécessaire ──
+  // Le nom tient sur 2 lignes maximum, la consigne aussi : au-delà on tronque.
+  function exHead(ex, maxW, fsName, fsNote, lineH) {
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(fsName);
+    let nameLines = doc.splitTextToSize(ex.exercise || '', maxW);
+    if (nameLines.length > 2) {
+      nameLines = nameLines.slice(0, 2);
+      let last = nameLines[1];
+      while (last.length > 2 && doc.getTextWidth(last + '\u2026') > maxW) last = last.slice(0, -1);
+      nameLines[1] = last + '\u2026';
+    }
+
+    const subText = [ex.note, ex.conseil].filter(Boolean).join(' \u2014 ').trim();
+    let subLines = [];
+    if (subText) {
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(fsNote);
+      subLines = doc.splitTextToSize(subText, maxW);
+      if (subLines.length > 2) {
+        subLines = subLines.slice(0, 2);
+        let last = subLines[1];
+        while (last.length > 2 && doc.getTextWidth(last + '\u2026') > maxW) last = last.slice(0, -1);
+        subLines[1] = last + '\u2026';
+      }
+    }
+
+    const h = nameLines.length * lineH + (subLines.length ? subLines.length * lineH * 0.82 : 0) + lineH * 0.45;
+    return { nameLines, subLines, height: h };
   }
 
   // ── Compute total content height for a week to derive scale ──
@@ -2612,7 +2664,19 @@ async function generatePDF() {
     const baseDayLbl = 9;
     const baseDayGap = 8;
     const nDw        = Math.max(1, nDaysOf(wIdx));
-    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap) + totalRows(wIdx) * baseRowH;
+    // Les noms longs et les consignes occupent plus d'une ligne : on majore
+    // le volume estimé pour que l'échelle ne surestime pas la place disponible.
+    let longEx = 0;
+    for (let d = 0; d < nDaysOf(wIdx); d++) {
+      ((weekData[wIdx] && weekData[wIdx][d]) || []).forEach(ex => {
+        const n   = (ex.subRows && ex.subRows.length) ? ex.subRows.length : 1;
+        const txt = (ex.exercise||'').length + [ex.note, ex.conseil].filter(Boolean).join(' ').length;
+        if (n === 1 && txt > 45) longEx += 1;      // ~1 ligne de plus
+        else if (txt > 90)       longEx += 0.5;
+      });
+    }
+    const baseTotal  = nDw * (baseDayLbl + baseHH + baseDayGap)
+                     + (totalRows(wIdx) + longEx) * baseRowH;
     // Lisibilité : la police du tableau ne descend jamais sous 8 pt.
     // fsRow = 8 * scale, donc scale ne peut pas passer sous 1.
     // Au-delà, le document passe à la page suivante plutôt que de rétrécir.
@@ -2638,8 +2702,13 @@ async function generatePDF() {
       const exs = (weekData[wIdx] && weekData[wIdx][d]) || [];
 
       // Hauteur nécessaire pour ce jour — saut de page si la place manque
-      const nRows  = exs.reduce((a,ex) => a + ((ex.subRows&&ex.subRows.length)?ex.subRows.length:1), 0) || 1;
-      const needed = dayLbl + hh + nRows*rowH + dayGap;
+      const bodyH  = exs.length
+        ? exs.reduce((a,ex) => {
+            const n = (ex.subRows && ex.subRows.length) ? ex.subRows.length : 1;
+            return a + Math.max(n*rowH, exHead(ex, exW-6, fsRow, Math.max(fsNote*0.9,6), fsRow*0.42).height) + 3;
+          }, 0)
+        : rowH;
+      const needed = dayLbl + hh + bodyH + dayGap;
       if (y + needed > PH - MB + 0.5 && d > 0) {
         doc.addPage();
         drawPageHeader(wIdx);
@@ -2690,51 +2759,58 @@ async function generatePDF() {
           const subs    = (ex.subRows && ex.subRows.length > 0) ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
           const bgBase  = ri%2===0 ? 255 : 250;
 
+          // Hauteur totale de l'exercice : au moins ses sous-lignes,
+          // davantage si le nom ou la consigne demandent plusieurs lignes.
+          const exHeight = Math.max(
+            subs.length * rowH,
+            exHead(ex, exW - 6, fsRow, Math.max(fsNote*0.9, 6), fsRow*0.42).height
+          );
+          const exTop    = y;
+          const subH     = exHeight / subs.length;   // les sous-lignes se répartissent la hauteur
+
           subs.forEach((sr, si) => {
-            const ty = y + rowH*0.65;
+            const ty = y + subH*0.62;
             const srCh = sr.chargeUserEdited && sr.charge
               ? sr.charge+' kg'
               : (isAuto ? computeAutoLoad({exercise:ex.exercise, pct:sr.pct, bloc:ex.bloc}) : (sr.charge?sr.charge+' kg':''));
 
-            // Row background blanc
+            // Fond blanc de la ligne
             doc.setFillColor(255,255,255);
-            doc.rect(ML, y, CW, rowH, 'F');
+            doc.rect(ML, y, CW, subH, 'F');
 
-            // Exercise column — fond gris léger sur toute la largeur
-            if (si === 0) {
-              doc.setFillColor(245,245,245);
-              doc.rect(ML, y, exW, rowH, 'F');
+            // Filet léger entre deux sous-lignes du même exercice
+            if (si > 0) {
+              doc.setDrawColor(228,228,228);
+              doc.setLineWidth(0.15);
+              doc.line(ML+exW, y, ML+CW, y);
             }
 
-            // Exercise name + conseil + note (first sub-row only)
+            // Colonne exercice — fond gris sur toute la hauteur de l'exercice
             if (si === 0) {
-              const maxW = exW - barW - 5;
-              const subText = [ex.note, ex.conseil].filter(Boolean).join(' — ');
-              const hasSubText = subText.trim().length > 0;
+              doc.setFillColor(245,245,245);
+              doc.rect(ML, exTop, exW, exHeight, 'F');
+            }
 
-              // Name
+            // Nom de l'exercice et consigne — première sous-ligne uniquement
+            if (si === 0) {
+              const maxW  = exW - 6;
+              const lineH = fsRow * 0.42;
+              const head  = exHead(ex, maxW, fsRow, Math.max(fsNote*0.9, 6), lineH);
+
+              // Bloc de texte centré verticalement dans la hauteur de l'exercice
+              let ty2 = y + (exHeight - head.height) / 2 + lineH * 0.85;
+
               doc.setFont('helvetica','bold');
               doc.setFontSize(fsRow);
               doc.setTextColor(30,30,30);
-              let name = ex.exercise || '';
-              if (doc.getTextWidth(name) > maxW) {
-                while (name.length > 2 && doc.getTextWidth(name+'…') > maxW) name = name.slice(0,-1);
-                name += '…';
-              }
-              const nameY = hasSubText ? y + rowH*0.38 : ty;
-              doc.text(name, ML+3, nameY);
+              head.nameLines.forEach(l => { doc.text(l, ML+3, ty2); ty2 += lineH; });
 
-              // Conseil / note sous le nom
-              if (hasSubText) {
+              if (head.subLines.length) {
                 doc.setFont('helvetica','normal');
-                doc.setFontSize(Math.max(fsNote*0.85, 6));
+                doc.setFontSize(Math.max(fsNote*0.9, 6));
                 doc.setTextColor(120,120,120);
-                let sub = subText;
-                if (doc.getTextWidth(sub) > maxW) {
-                  while (sub.length > 2 && doc.getTextWidth(sub+'…') > maxW) sub = sub.slice(0,-1);
-                  sub += '…';
-                }
-                doc.text(sub, ML+3, y + rowH*0.72);
+                ty2 += lineH * 0.12;
+                head.subLines.forEach(l => { doc.text(l, ML+3, ty2); ty2 += lineH * 0.82; });
               }
             }
 
@@ -2769,7 +2845,7 @@ async function generatePDF() {
 
             // Ressenti — vide, pas de ligne
 
-            y += rowH;
+            y += subH;
           }); // end subs.forEach
 
           // Séparateur entre exercices

@@ -2767,11 +2767,32 @@ async function generatePDF() {
       const label = 'DAY ' + (dy.idx + 1);
       doc.text(label, ML, midY, { baseline:'middle' });
       let lx = ML + doc.getTextWidth(label) + 2.5;
+
+      // « (suite) » d'abord : on connaît ainsi la place restante pour le nom
+      let suiteW = 0;
+      if (cont) {
+        doc.setFont('helvetica','italic');
+        doc.setFontSize(f.day * 0.6);
+        suiteW = doc.getTextWidth('  (suite)');
+      }
+
       if (dy.name) {
+        // Nom de jour sur une seule ligne : on réduit la police (0,8 → 0,5×)
+        // pour tenir avant la marge, puis on tronque en dernier recours.
+        let nm = '— ' + dy.name.trim().toUpperCase();
+        const avail = (PW - MR) - lx - suiteW;
         doc.setFont('helvetica','normal');
-        doc.setFontSize(f.day * 0.8);
+        let fsName = f.day * 0.8;
+        doc.setFontSize(fsName);
+        while (fsName > f.day * 0.5 && doc.getTextWidth(nm) > avail) {
+          fsName -= 0.3;
+          doc.setFontSize(fsName);
+        }
+        if (doc.getTextWidth(nm) > avail) {
+          while (nm.length > 3 && doc.getTextWidth(nm + '…') > avail) nm = nm.slice(0, -1);
+          nm += '…';
+        }
         doc.setTextColor(120,120,120);
-        const nm = '— ' + dy.name.toUpperCase();
         doc.text(nm, lx, midY, { baseline:'middle' });
         lx += doc.getTextWidth(nm) + 2.5;
       }
@@ -2779,7 +2800,7 @@ async function generatePDF() {
         doc.setFont('helvetica','italic');
         doc.setFontSize(f.day * 0.6);
         doc.setTextColor(150,150,150);
-        doc.text('(suite)', lx, midY, { baseline:'middle' });
+        doc.text('(suite)', Math.min(lx, PW - MR - doc.getTextWidth('(suite)')), midY, { baseline:'middle' });
       }
       y += dayHeadH;
     }
@@ -2866,10 +2887,21 @@ async function generatePDF() {
           if (ci !== 0 && v !== '') {
             const bold = ci === 5;
             doc.setFont('helvetica', bold ? 'bold' : 'normal');
-            doc.setFontSize(m.f.row);
             const g = bold ? 20 : 55;
             doc.setTextColor(g, g, g);
-            doc.text(String(v), cx + w * 0.5, midY, { align:'center', baseline:'middle' });
+            // Cellule étroite + valeur libre (charge, repos) : on réduit la
+            // police pour tenir dans la colonne, puis on tronque si besoin.
+            let str = String(v), fsCell = m.f.row;
+            doc.setFontSize(fsCell);
+            while (fsCell > 5.5 && doc.getTextWidth(str) > w - 1) {
+              fsCell -= 0.3;
+              doc.setFontSize(fsCell);
+            }
+            if (doc.getTextWidth(str) > w - 1) {
+              while (str.length > 1 && doc.getTextWidth(str + '…') > w - 1) str = str.slice(0, -1);
+              str += '…';
+            }
+            doc.text(str, cx + w * 0.5, midY, { align:'center', baseline:'middle' });
           }
           cx += w;
         });

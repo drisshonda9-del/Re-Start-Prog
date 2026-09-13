@@ -22,19 +22,23 @@
   --green: #1E3A33;         /* vert charte */
   --green-lt: #3E6B5C;
   --cream: #EFE7D6;
-  /* bloc colors */
-  --sbd:     #4a9eff;
-  --halte:   #f5a623;
-  --muscu:   #4adf8a;
-  --cardio:  #bf5af2;
-  --hyrox:   #c0601a;
-  --etire:   #e84d8a;
-  --sbd-bg:    rgba(74,158,255,0.08);
-  --halte-bg:  rgba(245,166,35,0.08);
-  --muscu-bg:  rgba(74,223,138,0.08);
-  --cardio-bg: rgba(191,90,242,0.08);
-  --hyrox-bg:  rgba(192,96,26,0.08);
-  --etire-bg:  rgba(232,77,138,0.08);
+  /* Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
+     --accent/--accent-deep pour bien ressortir, partagé par les 6 blocs
+     livrés et par tout bloc créé par le coach. */
+  --sbd:     #e63a54;
+  --halte:   #e63a54;
+  --muscu:   #e63a54;
+  --cardio:  #e63a54;
+  --hyrox:   #e63a54;
+  --etire:   #e63a54;
+  --sbd-bg:    rgba(230,58,84,0.08);
+  --halte-bg:  rgba(230,58,84,0.08);
+  --muscu-bg:  rgba(230,58,84,0.08);
+  --cardio-bg: rgba(230,58,84,0.08);
+  --hyrox-bg:  rgba(230,58,84,0.08);
+  --etire-bg:  rgba(230,58,84,0.08);
+  --bloc-custom:    #e63a54;
+  --bloc-custom-bg: rgba(230,58,84,0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -423,6 +427,7 @@ select option { background: #1a1d25; }
 .ex-card.bloc-cardio { border-left: 3px solid var(--cardio); background: var(--cardio-bg); }
 .ex-card.bloc-hyrox  { border-left: 3px solid var(--hyrox);  background: var(--hyrox-bg); }
 .ex-card.bloc-etire  { border-left: 3px solid var(--etire);  background: var(--etire-bg); }
+.ex-card[data-custom-bloc] { border-left: 3px solid var(--bloc-custom); background: var(--bloc-custom-bg); }
 
 .ex-top { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .bloc-dot {
@@ -436,6 +441,7 @@ select option { background: #1a1d25; }
 .bloc-dot.bloc-cardio { background: var(--cardio); }
 .bloc-dot.bloc-hyrox  { background: var(--hyrox); }
 .bloc-dot.bloc-etire  { background: var(--etire); }
+.bloc-dot[data-custom-bloc] { background: var(--bloc-custom); }
 
 .ex-name-wrap { flex: 1; position: relative; min-width: 0; }
 .ex-name-input {
@@ -443,6 +449,10 @@ select option { background: #1a1d25; }
   font-size: 14px; font-weight: 600; width: 100%; outline: none; padding: 2px 0;
 }
 .ex-name-input::placeholder { color: var(--muted); font-weight: 400; }
+.ex-reorder { display: flex; flex-direction: column; flex-shrink: 0; }
+.reorder-btn { background: transparent; border: none; color: var(--muted); font-size: 9px; line-height: 1; cursor: pointer; padding: 3px 5px; touch-action: none; }
+.reorder-btn:disabled { opacity: .25; cursor: default; }
+.reorder-btn:active:not(:disabled) { color: var(--accent); }
 .browse-btn { background: transparent; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 .browse-btn:active { color: var(--accent); }
 .del-btn { background: transparent; border: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
@@ -525,6 +535,8 @@ select option { background: #1a1d25; }
 .bloc-opt.halte  { border-color: var(--halte);  color: var(--halte);  background: var(--halte-bg); }
 .bloc-opt.muscu  { border-color: var(--muscu);  color: var(--muscu);  background: var(--muscu-bg); }
 .bloc-opt.cardio { border-color: var(--cardio); color: var(--cardio); background: var(--cardio-bg); }
+.bloc-opt[data-custom-bloc] { border-color: var(--bloc-custom); color: var(--bloc-custom); background: var(--bloc-custom-bg); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.bloc-opt-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bloc-custom); flex-shrink: 0; }
 .modal-cancel { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; cursor: pointer; margin-top: 4px; }
 
 /* ── EXERCISE BROWSER MODAL ── */
@@ -548,6 +560,7 @@ select option { background: #1a1d25; }
 .browser-bloc-title.cardio { color: var(--cardio); background: var(--bg); border-bottom: 1px solid var(--cardio); }
 .browser-bloc-title.hyrox  { color: var(--hyrox);  background: var(--bg); border-bottom: 1px solid var(--hyrox); }
 .browser-bloc-title.etire  { color: var(--etire);  background: var(--bg); border-bottom: 1px solid var(--etire); }
+.browser-bloc-title[data-custom-bloc] { color: var(--bloc-custom); background: var(--bg); border-bottom: 1px solid var(--bloc-custom); }
 .browser-sub-title { padding: 10px 16px 5px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); background: var(--surface); }
 .browser-ex {
   padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
@@ -562,6 +575,56 @@ select option { background: #1a1d25; }
 .browser-ex-dot.cardio { background: var(--cardio); }
 .browser-ex-dot.hyrox  { background: var(--hyrox); }
 .browser-ex-dot.etire  { background: var(--etire); }
+.browser-ex-dot[data-custom-bloc] { background: var(--bloc-custom); }
+
+/* ── BIBLIOTHÈQUE D'EXERCICES ── */
+.lib-bloc { border-bottom: 1px solid var(--border); }
+.lib-bloc:last-child { border-bottom: none; }
+.lib-bloc-head {
+  display: flex; align-items: center; justify-content: flex-start; gap: 8px;
+  padding: 12px 2px; cursor: pointer; user-select: none;
+  font-family: 'Archivo Black', sans-serif; font-size: 13px; letter-spacing: 0.5px;
+  background: var(--bg);
+}
+.lib-bloc-label { flex: 1; min-width: 0; }
+.lib-bloc-head.sbd    { color: var(--sbd);    border-bottom: 1px solid var(--sbd); }
+.lib-bloc-head.halte  { color: var(--halte);  border-bottom: 1px solid var(--halte); }
+.lib-bloc-head.muscu  { color: var(--muscu);  border-bottom: 1px solid var(--muscu); }
+.lib-bloc-head.cardio { color: var(--cardio); border-bottom: 1px solid var(--cardio); }
+.lib-bloc-head.hyrox  { color: var(--hyrox);  border-bottom: 1px solid var(--hyrox); }
+.lib-bloc-head.etire  { color: var(--etire);  border-bottom: 1px solid var(--etire); }
+.lib-bloc-head[data-custom-bloc] { color: var(--bloc-custom); border-bottom: 1px solid var(--bloc-custom); }
+.lib-bloc-head .arrow { color: inherit; opacity: .8; }
+.lib-bloc-body { display: none; padding: 6px 2px 14px; }
+.lib-bloc-body.open { display: block; }
+
+.lib-ex-flat { margin-bottom: 4px; }
+
+.lib-cat { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.lib-cat-head { display: flex; align-items: center; gap: 6px; padding: 4px 0 6px; }
+.lib-cat-name { flex: 1; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text); }
+.lib-cat-exlist { padding-left: 8px; }
+
+.lib-ex-row { display: flex; align-items: center; gap: 6px; padding: 7px 0 7px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.lib-ex-row:last-child { border-bottom: none; }
+.lib-ex-name { flex: 1; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+
+.lib-badge {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; flex-shrink: 0;
+}
+
+.lib-new-row { display: flex; gap: 6px; margin-top: 8px; }
+.lib-new-row input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+.lib-new-row input:focus { border-color: var(--accent); }
+.lib-new-btn { background: transparent; border: 1px solid var(--accent-deep); color: var(--accent); padding: 0 14px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.lib-new-btn:active { background: var(--accent-deep); color: var(--cream); }
+
+.cat-icon-btn { background: transparent; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+.cat-icon-btn:active { color: var(--accent); }
+.cat-icon-btn.danger:active { color: var(--danger); }
+.cat-row-edit { flex: 1; display: flex; gap: 6px; min-width: 0; }
+.cat-row-edit input, .cat-row-edit select { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--accent); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
 
 /* ── EXCEL WEEK CHECKS ── */
 .week-check-item {
@@ -629,6 +692,14 @@ select option { background: #1a1d25; }
   <div class="section-body" id="pr-body"></div>
 </div>
 
+<!-- BIBLIOTHÈQUE D'EXERCICES -->
+<div class="section">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-head-title">Bibliothèque d'exercices</span><span class="arrow">▼</span>
+  </div>
+  <div class="section-body" id="lib-body"></div>
+</div>
+
 <!-- WEEK TABS -->
 <div class="saved-flag" id="saved-flag">Enregistré</div>
 <div class="ctx-backdrop" id="ctx-backdrop" onclick="closeCtx()"></div>
@@ -645,7 +716,7 @@ select option { background: #1a1d25; }
 <div class="modal" id="bloc-modal" onclick="closeBlocModal(event)">
   <div class="modal-sheet">
     <div class="modal-title">Type d'exercice</div>
-    <div class="bloc-options">
+    <div class="bloc-options" id="bloc-options">
       <div class="bloc-opt sbd"    onclick="pickBloc('sbd')">🔵 SBD</div>
       <div class="bloc-opt halte"  onclick="pickBloc('halte')">🟡 Haltérophilie</div>
       <div class="bloc-opt muscu"  onclick="pickBloc('muscu')">🟢 Musculation</div>
@@ -975,6 +1046,36 @@ function nDaysOf(w)    { return (weekData[w] || []).length; }
 function getDayName(w,d){ return (dayNames[w] && dayNames[w][d]) || ''; }
 function hasProgram()  { return sections.length > 0 && weekData.length > 0; }
 
+// ── Identifiants stables (eid par exercice, sid par ligne de série) ──
+// Générés une seule fois, jamais réutilisés : un exercice déplacé (ou une
+// série modifiée) garde le sien. Voir docs/json-contract.md du projet plateforme.
+function randId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+function newEid() { return 'ex_'  + randId(); }
+function newSid() { return 'set_' + randId(); }
+
+// Complète les id manquants sans toucher à ceux déjà présents (import JSON
+// ancien format, ou fichier externe).
+function ensureIds(day) {
+  (day || []).forEach(ex => {
+    if (!ex.eid) ex.eid = newEid();
+    const subs = (ex.subRows && ex.subRows.length) ? ex.subRows : null;
+    if (subs) subs.forEach(sr => { if (!sr.sid) sr.sid = newSid(); });
+  });
+}
+// Régénère TOUS les id d'un jour — utilisé après un clonage (dupliquer un
+// jour/une semaine) : une copie est une nouvelle ligne, pas la même ligne
+// deux fois, sinon deux exercices distincts partageraient le même eid.
+function remintIds(day) {
+  (day || []).forEach(ex => {
+    ex.eid = newEid();
+    const subs = (ex.subRows && ex.subRows.length) ? ex.subRows : null;
+    if (subs) subs.forEach(sr => { sr.sid = newSid(); });
+  });
+}
+
 // ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
@@ -985,7 +1086,10 @@ function init() {
     if (data.subs) Object.keys(data.subs).forEach(k => data.subs[k].sort((a,b) => a.localeCompare(b,'fr')));
   });
   ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+  loadCustomBlocs();
+  loadCustomCategories();
   loadCustomExercises();
+  renderBlocPickerOptions();
 
   renderPRSection();
   const restored = restoreAutosave();
@@ -996,6 +1100,7 @@ function init() {
   renderDays();
   updateEmptyState();
   buildBrowserFull();
+  renderLibSection();
   autosaveReady = true;
   if (restored) showToast('Programme restaur\u00e9');
 }
@@ -1173,7 +1278,9 @@ function addDay(copyCurrent) {
   if (!dayNames[activeWeek]) dayNames[activeWeek] = [];
 
   if (copyCurrent && weekData[activeWeek][activeDay]) {
-    weekData[activeWeek].push(JSON.parse(JSON.stringify(weekData[activeWeek][activeDay])));
+    const clone = JSON.parse(JSON.stringify(weekData[activeWeek][activeDay]));
+    remintIds(clone);   // copie = nouvelles lignes, pas les mêmes id que l'original
+    weekData[activeWeek].push(clone);
     dayNames[activeWeek].push(getDayName(activeWeek, activeDay));
   } else {
     weekData[activeWeek].push(newDay());
@@ -1467,7 +1574,9 @@ function addWeek(copyPrev) {
   saveState();
   const src = activeWeek;                    // on copie la semaine ACTIVE
   if (copyPrev && weekData[src]) {
-    weekData.push(JSON.parse(JSON.stringify(weekData[src])));
+    const clone = JSON.parse(JSON.stringify(weekData[src]));
+    clone.forEach(day => remintIds(day));   // idem : chaque jour cloné reçoit des id neufs
+    weekData.push(clone);
     dayNames.push([...(dayNames[src] || [])]);
   } else {
     weekData.push([ newDay() ]);
@@ -1496,6 +1605,7 @@ function saveState() {
     weekData[activeWeek][d] = Array.from(cards).map(c => {
       const subRowEls = c.querySelectorAll('.sub-row');
       const subRows = Array.from(subRowEls).map(sr => ({
+        sid:   sr.dataset.sid || newSid(),
         sets:  sr.querySelector('.sel-sets').value,
         reps:  sr.querySelector('.sel-reps').value,
         rpe:   sr.querySelector('.sel-rpe').value,
@@ -1506,6 +1616,7 @@ function saveState() {
         chargeUserEdited: sr.querySelector('.load-auto') ? !!sr.querySelector('.load-auto').dataset.userEdited : false,
       }));
       return {
+        eid:      c.dataset.eid || newEid(),
         exercise: c.querySelector('.ex-name-input').value,
         bloc:     c.dataset.bloc,
         sets:     subRows[0]?.sets || '',
@@ -1579,6 +1690,7 @@ function renderDays() {
     <button class="btn-add-ex" onclick="addEx(${d})">＋ Ajouter exercice</button>`;
   cont.appendChild(card);
   exs.forEach(ex => appendExCard(d, ex));
+  refreshReorderButtons(d);
 
   const add = document.createElement('button');
   add.className = 'btn-add-day';
@@ -1612,6 +1724,7 @@ function appendExCard(dayIdx, ex) {
   card.className = `ex-card bloc-${bloc}`;
   card.dataset.day  = dayIdx;
   card.dataset.bloc = bloc;
+  card.dataset.eid  = ex.eid || newEid();
 
   const isAutoLoad = (bloc === 'sbd' || bloc === 'halte');
   const load = isAutoLoad ? computeAutoLoad(ex) : '';
@@ -1629,8 +1742,12 @@ function appendExCard(dayIdx, ex) {
           oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
         <div class="ac-list"></div>
       </div>
+      <div class="ex-reorder">
+        <button class="reorder-btn" data-dir="-1" title="Monter" aria-label="Monter l'exercice">▲</button>
+        <button class="reorder-btn" data-dir="1"  title="Descendre" aria-label="Descendre l'exercice">▼</button>
+      </div>
       <button class="browse-btn" onclick="openBrowser(this.closest('.ex-card'))">🔍</button>
-      <button class="del-btn" onclick="this.closest('.ex-card').remove()">×</button>
+      <button class="del-btn" onclick="removeExCard(this)">×</button>
     </div>
     <div class="sub-rows" id="subrows-${dlId}"></div>
     <div class="ex-line">
@@ -1643,6 +1760,10 @@ function appendExCard(dayIdx, ex) {
     </div>`;
 
   list.appendChild(card);
+  if (!isBuiltinBloc(bloc)) {
+    card.setAttribute('data-custom-bloc', '');
+    card.querySelector('.bloc-dot').setAttribute('data-custom-bloc', '');
+  }
 
   // Render sub-rows
   const subContainer = card.querySelector('.sub-rows');
@@ -1651,6 +1772,8 @@ function appendExCard(dayIdx, ex) {
 
 function addEx(dayIdx) {
   appendExCard(dayIdx, {exercise:'',bloc:'muscu',sets:'3',reps:'10',rpe:'7',pct:'',charge:'',note:''});
+  refreshReorderButtons(dayIdx);
+  scheduleAutosave();
 }
 
 // Construction unique de la cellule Charge (utilisée partout)
@@ -1685,6 +1808,7 @@ function onChargeInput(input) {
 function appendSubRow(container, sr, bloc, isAutoLoad) {
   const div = document.createElement('div');
   div.className = 'sub-row';
+  div.dataset.sid = sr.sid || newSid();
   const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
   const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
   div.innerHTML = `
@@ -1710,6 +1834,7 @@ function addSubRow(btn) {
   const newRow = {sets:'3',reps:'5',rpe:'7',pct:'',rest:'',charge:''};
   const div = document.createElement('div');
   div.className = 'sub-row';
+  div.dataset.sid = newSid();
   div.innerHTML = `
     <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,newRow.sets)}</select></div>
     <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,newRow.reps)}</select></div>
@@ -1743,6 +1868,69 @@ function refreshSubLoad(sel) {
   if (val && val !== '—') input.value = val.replace(' kg','');
   toggleUnit(input);
 }
+
+function removeExCard(btn) {
+  const card = btn.closest('.ex-card');
+  const dayIdx = card.dataset.day;
+  card.remove();
+  refreshReorderButtons(dayIdx);
+  scheduleAutosave();
+}
+
+// ═══════════════════════════════════════════════════
+//  RÉORDONNANCEMENT DES EXERCICES (flèches monter/descendre)
+//  Pas de glisser-déposer : conflit avec le défilement sur mobile.
+// ═══════════════════════════════════════════════════
+// Échange deux cartes voisines dans le DOM — l'ordre du tableau weekData
+// n'est reconstruit qu'au prochain saveState() (à partir de l'ordre DOM),
+// donc rien d'autre à recalculer ici. Les eid/sid restent sur leurs cartes :
+// on déplace les noeuds, jamais leur contenu.
+function moveExercise(card, dir) {
+  const sib = dir < 0 ? card.previousElementSibling : card.nextElementSibling;
+  if (!sib || !sib.classList.contains('ex-card')) return false;
+  if (dir < 0) card.parentElement.insertBefore(card, sib);
+  else         card.parentElement.insertBefore(sib, card);
+  return true;
+}
+
+// Grise la flèche haut de la 1ʳᵉ carte et la flèche bas de la dernière
+function refreshReorderButtons(dayIdx) {
+  const cards = document.querySelectorAll(`.ex-card[data-day="${dayIdx}"]`);
+  cards.forEach((c, i) => {
+    const up   = c.querySelector('.reorder-btn[data-dir="-1"]');
+    const down = c.querySelector('.reorder-btn[data-dir="1"]');
+    if (up)   up.disabled   = (i === 0);
+    if (down) down.disabled = (i === cards.length - 1);
+  });
+}
+
+// Appui = un déplacement ; appui maintenu = déplacements enchaînés jusqu'au
+// relâchement (ou jusqu'à buter en haut/bas de la liste).
+let reorderDelay = null, reorderLoop = null;
+function reorderStep(card, dir) {
+  const dayIdx = card.dataset.day;
+  if (!moveExercise(card, dir)) { reorderStop(); return; }
+  refreshReorderButtons(dayIdx);
+  scheduleAutosave();
+}
+function reorderStop() {
+  clearTimeout(reorderDelay);
+  clearInterval(reorderLoop);
+  reorderDelay = reorderLoop = null;
+}
+document.addEventListener('pointerdown', e => {
+  const btn = e.target.closest('.reorder-btn');
+  if (!btn || btn.disabled) return;
+  e.preventDefault();
+  const card = btn.closest('.ex-card');
+  const dir  = +btn.dataset.dir;
+  reorderStop();
+  reorderStep(card, dir);                      // premier déplacement immédiat
+  reorderDelay = setTimeout(() => {
+    reorderLoop = setInterval(() => reorderStep(card, dir), 130);
+  }, 450);
+});
+['pointerup', 'pointercancel'].forEach(evt => document.addEventListener(evt, reorderStop));
 
 // ═══════════════════════════════════════════════════
 //  LOAD COMPUTE
@@ -1840,7 +2028,619 @@ function acRender(input) {
   });
 }
 
-// ── Ajout d'un exercice à la bibliothèque ──
+// ═══════════════════════════════════════════════════
+//  BLOCS PERSONNALISÉS (créer / renommer / supprimer)
+//  Les 6 blocs livrés (SBD, Haltérophilie…) restent fixes. Un bloc créé par
+//  le coach se comporte à l'identique — même stockage (exercices/sous-
+//  catégories), même sélecteur. Plus de code couleur par bloc (décision
+//  utilisateur) : --sbd/--halte/…/--bloc-custom pointent tous vers le même
+//  rouge bordeaux (--bloc-custom ci-dessous, cartes/dot/titres/PDF/Excel).
+// ═══════════════════════════════════════════════════
+const BUILTIN_BLOCS = new Set(['sbd', 'halte', 'muscu', 'cardio', 'hyrox', 'etire']);
+function isBuiltinBloc(bloc) { return BUILTIN_BLOCS.has(bloc); }
+let customBlocKeys = new Set();
+
+function loadCustomBlocs() {
+  try {
+    const list = JSON.parse(localStorage.getItem('restart_custom_blocs') || '[]');
+    list.forEach(b => {
+      if (!b || !b.key || DB[b.key]) return;
+      DB[b.key] = { label: b.label || b.key, exercises: [] };
+      customBlocKeys.add(b.key);
+    });
+  } catch(e) {}
+}
+function persistCustomBlocs() {
+  const list = Array.from(customBlocKeys).filter(k => DB[k]).map(k => ({ key: k, label: DB[k].label }));
+  try { localStorage.setItem('restart_custom_blocs', JSON.stringify(list)); } catch(e) {}
+}
+
+function addBloc(label) {
+  label = (label || '').trim();
+  if (!label) { showToast('Donne un nom au bloc'); return false; }
+  const dup = Object.values(DB).some(d => d.label.toLowerCase() === label.toLowerCase());
+  if (dup) { showToast('Un bloc porte déjà ce nom'); return false; }
+  const key = 'b_' + randId().slice(0, 8);
+  DB[key] = { label, exercises: [] };
+  customBlocKeys.add(key);
+  persistCustomBlocs();
+  renderBlocPickerOptions();
+  return key;
+}
+
+function renameBloc(key, newLabel) {
+  newLabel = (newLabel || '').trim();
+  if (!newLabel) return false;
+  if (!customBlocKeys.has(key)) { showToast('Bloc protégé'); return false; }
+  const dup = Object.entries(DB).some(([k, d]) => k !== key && d.label.toLowerCase() === newLabel.toLowerCase());
+  if (dup) { showToast('Un bloc porte déjà ce nom'); return false; }
+  DB[key].label = newLabel;
+  persistCustomBlocs();
+  renderBlocPickerOptions();
+  return true;
+}
+
+// Nombre total d'exercices contenus dans un bloc (plat + toutes ses sous-catégories)
+function countBlocContent(key) {
+  const d = DB[key];
+  if (!d) return 0;
+  let n = (d.exercises || []).length;
+  if (d.subs) Object.values(d.subs).forEach(arr => { n += arr.length; });
+  return n;
+}
+
+// Confirmation nommée (bloc + nombre d'exercices) avant toute suppression.
+// Les cartes d'un programme existant qui utilisent déjà ce bloc ne sont pas
+// modifiées (elles gardent leur clé de bloc, comme pour une catégorie/exercice
+// supprimé de la bibliothèque).
+function deleteBloc(key) {
+  if (!customBlocKeys.has(key)) { showToast('Bloc protégé'); return false; }
+  const label = DB[key].label;
+  const n = countBlocContent(key);
+  const msg = n > 0
+    ? `Supprimer le bloc « ${label} » et ${n} exercice${n > 1 ? 's' : ''} qu'il contient ?\n\nCette action est irréversible.`
+    : `Supprimer le bloc « ${label} » ?`;
+  if (!confirm(msg)) return false;
+
+  delete DB[key];
+  customBlocKeys.delete(key);
+  for (let i = ALL_EX.length - 1; i >= 0; i--) if (ALL_EX[i].bloc === key) ALL_EX.splice(i, 1);
+  for (const k of Array.from(customCatKeys)) if (k.startsWith(key + '|')) customCatKeys.delete(k);
+  try {
+    let cats = JSON.parse(localStorage.getItem('restart_custom_cats') || '[]');
+    cats = cats.filter(c => c.bloc !== key);
+    localStorage.setItem('restart_custom_cats', JSON.stringify(cats));
+  } catch(e) {}
+  try {
+    let exs = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    exs = exs.filter(c => c.bloc !== key);
+    localStorage.setItem('restart_custom_ex', JSON.stringify(exs));
+  } catch(e) {}
+  persistCustomBlocs();
+  renderBlocPickerOptions();
+  return true;
+}
+
+// ── Modale « type d'exercice » : les blocs perso s'ajoutent après les 6 livrés ──
+function renderBlocPickerOptions() {
+  const wrap = document.getElementById('bloc-options');
+  if (!wrap) return;
+  wrap.querySelectorAll('[data-custom-bloc]').forEach(el => el.remove());
+  customBlocKeys.forEach(key => {
+    const d = DB[key];
+    if (!d) return;
+    const div = document.createElement('div');
+    div.className = 'bloc-opt';
+    div.setAttribute('data-custom-bloc', '');
+    const dot = document.createElement('span');
+    dot.className = 'bloc-opt-dot';
+    div.appendChild(dot);
+    div.appendChild(document.createTextNode(' ' + d.label));
+    div.onclick = () => pickBloc(key);
+    wrap.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  CATÉGORIES DE LA BIBLIOTHÈQUE (créer / renommer / supprimer)
+//  Les catégories livrées (Dos, Pecs…) restent fixes ; seules celles créées
+//  ici sont renommables/supprimables — customCatKeys en garde la trace.
+// ═══════════════════════════════════════════════════
+let customCatKeys = new Set();
+function catKey(bloc, name) { return bloc + '|' + name; }
+
+function loadCustomCategories() {
+  try {
+    const cats = JSON.parse(localStorage.getItem('restart_custom_cats') || '[]');
+    cats.forEach(c => {
+      if (!DB[c.bloc]) return;
+      if (!DB[c.bloc].subs) DB[c.bloc].subs = {};
+      if (!DB[c.bloc].subs[c.name]) DB[c.bloc].subs[c.name] = [];
+      customCatKeys.add(catKey(c.bloc, c.name));
+    });
+  } catch(e) {}
+}
+function persistCustomCategories() {
+  const list = [];
+  customCatKeys.forEach(k => {
+    const i = k.indexOf('|');
+    list.push({ bloc: k.slice(0, i), name: k.slice(i + 1) });
+  });
+  try { localStorage.setItem('restart_custom_cats', JSON.stringify(list)); } catch(e) {}
+}
+
+// Un exercice du même nom existe-t-il ailleurs dans ce bloc (autre catégorie,
+// ou liste plate) ? Sert à ne pas le retirer d'ALL_EX à tort (ex. « Ski Erg »
+// existe à la fois en Cardio et en Hyrox).
+function existsInBloc(bloc, name) {
+  const d = DB[bloc]; if (!d) return false;
+  const nl = name.toLowerCase();
+  if (d.exercises && d.exercises.some(e => e.n.toLowerCase() === nl)) return true;
+  if (d.subs) return Object.values(d.subs).some(arr => arr.some(n => n.toLowerCase() === nl));
+  return false;
+}
+
+function addCategory(bloc, name) {
+  name = (name || '').trim();
+  if (!name || !DB[bloc]) return false;
+  if (!DB[bloc].subs) DB[bloc].subs = {};
+  const dup = Object.keys(DB[bloc].subs).some(k => k.toLowerCase() === name.toLowerCase());
+  if (dup) { showToast('Cette catégorie existe déjà'); return false; }
+  DB[bloc].subs[name] = [];
+  customCatKeys.add(catKey(bloc, name));
+  persistCustomCategories();
+  return true;
+}
+
+function renameCategory(bloc, oldName, newName) {
+  newName = (newName || '').trim();
+  if (!newName || newName === oldName) return false;
+  if (!customCatKeys.has(catKey(bloc, oldName))) { showToast('Catégorie protégée'); return false; }
+  const clash = Object.keys(DB[bloc].subs).some(k => k !== oldName && k.toLowerCase() === newName.toLowerCase());
+  if (clash) { showToast('Une catégorie porte déjà ce nom'); return false; }
+
+  const list = DB[bloc].subs[oldName] || [];
+  delete DB[bloc].subs[oldName];
+  DB[bloc].subs[newName] = list;
+  customCatKeys.delete(catKey(bloc, oldName));
+  customCatKeys.add(catKey(bloc, newName));
+
+  // Cascade : les exercices perso déjà rangés dans l'ancienne catégorie la suivent
+  try {
+    const custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    custom.forEach(c => { if (c.bloc === bloc && c.sub === oldName) c.sub = newName; });
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+
+  persistCustomCategories();
+  return true;
+}
+
+// Confirmation nommée (catégorie + nombre d'exercices) avant toute suppression.
+function deleteCategory(bloc, name) {
+  if (!customCatKeys.has(catKey(bloc, name))) { showToast('Catégorie protégée'); return false; }
+  const list = (DB[bloc].subs && DB[bloc].subs[name]) || [];
+  const n = list.length;
+  const msg = n > 0
+    ? `Supprimer la catégorie « ${name} » et ${n} exercice${n > 1 ? 's' : ''} qu'elle contient ?\n\nCette action est irréversible.`
+    : `Supprimer la catégorie « ${name} » ?`;
+  if (!confirm(msg)) return false;
+
+  delete DB[bloc].subs[name];
+  customCatKeys.delete(catKey(bloc, name));
+
+  // Retire ces exercices d'ALL_EX (recherche/autocomplétion) — sauf s'ils
+  // existent aussi ailleurs dans le même bloc.
+  list.forEach(exName => {
+    if (existsInBloc(bloc, exName)) return;
+    for (let i = ALL_EX.length - 1; i >= 0; i--) {
+      if (ALL_EX[i].bloc === bloc && ALL_EX[i].name.toLowerCase() === exName.toLowerCase()) ALL_EX.splice(i, 1);
+    }
+  });
+  // Retire les entrées correspondantes de la persistance des exercices perso
+  try {
+    let custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    custom = custom.filter(c => !(c.bloc === bloc && c.sub === name));
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+
+  persistCustomCategories();
+  return true;
+}
+
+// ═══════════════════════════════════════════════════
+//  EXERCICES DE LA BIBLIOTHÈQUE (ajouter / renommer / supprimer / déplacer)
+//  Règle : ce qui est créé par le coach est modifiable, où qu'il soit (avec
+//  ou sans sous-catégorie) ; ce qui est livré d'origine est protégé.
+// ═══════════════════════════════════════════════════
+function exKey(bloc, sub, name) { return bloc + '|' + (sub || '') + '|' + name.toLowerCase(); }
+
+// Relit restart_custom_ex une fois par rendu (évite de re-parser à chaque ligne)
+function customExMap() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]'); } catch(e) {}
+  const map = new Map();
+  list.forEach(c => map.set(exKey(c.bloc, c.sub, c.name), c));
+  return map;
+}
+
+// Lit/écrit la liste d'exercices d'un emplacement (bloc + sous-catégorie, ou
+// bloc seul = liste plate) sans se soucier de sa forme interne : les
+// sous-catégories sont des tableaux de noms, les listes plates des {n}.
+function readExList(bloc, sub) {
+  if (sub) return (DB[bloc].subs && DB[bloc].subs[sub]) ? DB[bloc].subs[sub].slice() : [];
+  return (DB[bloc].exercises || []).map(e => e.n);
+}
+function writeExList(bloc, sub, names) {
+  if (sub) { DB[bloc].subs[sub] = names; return; }
+  DB[bloc].exercises = names.map(n => ({ n }));
+}
+function persistCustomExercise(bloc, sub, name) {
+  try {
+    const list = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    list.push({ name, bloc, sub: sub || null });
+    localStorage.setItem('restart_custom_ex', JSON.stringify(list));
+  } catch(e) {}
+}
+
+function addLibExercise(bloc, sub, name) {
+  name = (name || '').trim();
+  if (!name) return false;
+  const list = readExList(bloc, sub);
+  if (list.some(n => n.toLowerCase() === name.toLowerCase())) { showToast('Cet exercice existe déjà ici'); return false; }
+  list.push(name);
+  list.sort((a,b) => a.localeCompare(b,'fr'));
+  writeExList(bloc, sub, list);
+  ALL_EX.push({ name, bloc });
+  ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+  persistCustomExercise(bloc, sub, name);
+  return true;
+}
+
+function renameLibExercise(bloc, sub, oldName, newName) {
+  newName = (newName || '').trim();
+  if (!newName || newName === oldName) return false;
+  if (!customExMap().has(exKey(bloc, sub, oldName))) { showToast('Exercice protégé'); return false; }
+  const list = readExList(bloc, sub);
+  if (list.some(n => n.toLowerCase() === newName.toLowerCase() && n.toLowerCase() !== oldName.toLowerCase())) {
+    showToast('Un exercice porte déjà ce nom ici'); return false;
+  }
+  const idx = list.findIndex(n => n === oldName);
+  if (idx === -1) return false;
+  list[idx] = newName;
+  list.sort((a,b) => a.localeCompare(b,'fr'));
+  writeExList(bloc, sub, list);
+
+  const inAllEx = ALL_EX.find(e => e.bloc === bloc && e.name === oldName);
+  if (inAllEx) inAllEx.name = newName;
+  ALL_EX.sort((a,b) => a.name.localeCompare(b.name,'fr'));
+
+  try {
+    const custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    const entry = custom.find(c => c.bloc === bloc && c.sub === (sub || null) && c.name === oldName);
+    if (entry) entry.name = newName;
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+  return true;
+}
+
+// Confirmation nommée avant suppression. Les cartes d'un programme existant
+// qui utilisent déjà cet exercice ne sont pas modifiées (nom en dur, comme
+// pour la suppression d'une catégorie).
+function deleteLibExercise(bloc, sub, name) {
+  if (!customExMap().has(exKey(bloc, sub, name))) { showToast('Exercice protégé'); return false; }
+  if (!confirm(`Supprimer l'exercice « ${name} » de la bibliothèque ?`)) return false;
+
+  writeExList(bloc, sub, readExList(bloc, sub).filter(n => n !== name));
+  if (!existsInBloc(bloc, name)) {
+    for (let i = ALL_EX.length - 1; i >= 0; i--) {
+      if (ALL_EX[i].bloc === bloc && ALL_EX[i].name.toLowerCase() === name.toLowerCase()) ALL_EX.splice(i, 1);
+    }
+  }
+  try {
+    let custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    custom = custom.filter(c => !(c.bloc === bloc && c.sub === (sub || null) && c.name === name));
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+  return true;
+}
+
+function moveLibExercise(bloc, sub, name, newBloc, newSub) {
+  if (!customExMap().has(exKey(bloc, sub, name))) { showToast('Exercice protégé'); return false; }
+  if (newBloc === bloc && (newSub || '') === (sub || '')) return false;
+
+  const destList = readExList(newBloc, newSub);
+  if (destList.some(n => n.toLowerCase() === name.toLowerCase())) { showToast('Cet exercice existe déjà à destination'); return false; }
+
+  writeExList(bloc, sub, readExList(bloc, sub).filter(n => n !== name));
+  destList.push(name);
+  destList.sort((a,b) => a.localeCompare(b,'fr'));
+  writeExList(newBloc, newSub, destList);
+
+  const inAllEx = ALL_EX.find(e => e.bloc === bloc && e.name === name);
+  if (inAllEx) inAllEx.bloc = newBloc;
+
+  try {
+    const custom = JSON.parse(localStorage.getItem('restart_custom_ex') || '[]');
+    const entry = custom.find(c => c.bloc === bloc && c.sub === (sub || null) && c.name === name);
+    if (entry) { entry.bloc = newBloc; entry.sub = newSub || null; }
+    localStorage.setItem('restart_custom_ex', JSON.stringify(custom));
+  } catch(e) {}
+  return true;
+}
+
+// Liste de toutes les destinations possibles (tous blocs, plat + sous-catégories)
+function libDestinationOptions(currentBloc, currentSub) {
+  let opts = '';
+  Object.entries(DB).forEach(([b, data]) => {
+    if (data.exercises) {
+      const sel = (b === currentBloc && !currentSub) ? ' selected' : '';
+      opts += `<option value="${b}|"${sel}>${data.label}</option>`;
+    }
+    if (data.subs) {
+      Object.keys(data.subs).sort((a,c) => a.localeCompare(c,'fr')).forEach(sub => {
+        const sel = (b === currentBloc && sub === currentSub) ? ' selected' : '';
+        opts += `<option value="${b}|${sub}"${sel}>${data.label} — ${sub}</option>`;
+      });
+    }
+  });
+  return opts;
+}
+
+// ── Petits constructeurs réutilisés partout dans la section bibliothèque ──
+function iconBtn(symbol, title, onClick, danger) {
+  const b = document.createElement('button');
+  b.className = 'cat-icon-btn' + (danger ? ' danger' : '');
+  b.title = title;
+  b.textContent = symbol;
+  b.onclick = onClick;
+  return b;
+}
+// Ligne d'édition en place (texte) : ✓ valide, ✕ annule, Entrée valide, Échap annule
+function inlineEditRow(initialValue, onCommit, onCancel) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cat-row-edit';
+  const input = document.createElement('input');
+  input.type = 'text'; input.maxLength = 40;
+  if (initialValue != null) input.value = initialValue;
+  const commit = () => onCommit(input.value.trim());
+  wrap.appendChild(input);
+  wrap.appendChild(iconBtn('✓', 'Valider', commit));
+  wrap.appendChild(iconBtn('✕', 'Annuler', () => onCancel && onCancel()));
+  input.onkeydown = e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape' && onCancel) onCancel(); };
+  setTimeout(() => { input.focus(); input.select(); }, 0);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════
+//  SECTION « BIBLIOTHÈQUE D'EXERCICES » (écran principal)
+// ═══════════════════════════════════════════════════
+let libOpenBlocs = new Set();   // blocs dépliés — mémorisé le temps de la session
+
+function renderLibSection() {
+  const body = document.getElementById('lib-body');
+  if (!body) return;
+  body.innerHTML = '';
+  const cmap = customExMap();
+
+  Object.entries(DB).forEach(([bloc, data]) => {
+    const isOpen   = libOpenBlocs.has(bloc);
+    const isCustom = customBlocKeys.has(bloc);
+    const blocDiv = document.createElement('div');
+    blocDiv.className = 'lib-bloc';
+
+    const head = document.createElement('div');
+    head.className = 'lib-bloc-head' + (isCustom ? '' : ` ${bloc}`) + (isOpen ? ' open' : '');
+    if (isCustom) head.setAttribute('data-custom-bloc', '');
+    head.onclick = () => {
+      if (isOpen) libOpenBlocs.delete(bloc); else libOpenBlocs.add(bloc);
+      renderLibSection();
+    };
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'lib-bloc-label';
+    labelSpan.textContent = data.label;
+    head.appendChild(labelSpan);
+
+    if (isCustom) {
+      head.appendChild(iconBtn('✏️', 'Renommer le bloc', e => { e.stopPropagation(); startRenameLibBloc(head, bloc); }));
+      head.appendChild(iconBtn('🗑️', 'Supprimer le bloc', e => { e.stopPropagation(); if (deleteBloc(bloc)) renderLibSection(); }, true));
+    } else {
+      const badge = document.createElement('span');
+      badge.className = 'lib-badge';
+      badge.textContent = 'livré';
+      head.appendChild(badge);
+    }
+
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.textContent = '▼';
+    head.appendChild(arrow);
+
+    blocDiv.appendChild(head);
+
+    const blocBody = document.createElement('div');
+    blocBody.className = 'lib-bloc-body' + (isOpen ? ' open' : '');
+
+    if (isOpen) {
+      if (data.exercises) {
+        const flat = document.createElement('div');
+        flat.className = 'lib-ex-flat';
+        data.exercises.forEach(ex => flat.appendChild(buildLibExRow(bloc, '', ex.n, cmap)));
+        blocBody.appendChild(flat);
+      }
+      Object.keys(data.subs || {}).forEach(sub => {
+        blocBody.appendChild(buildLibCatBlock(bloc, sub, data.subs[sub], cmap));
+      });
+      blocBody.appendChild(buildNewCatRow(bloc));
+    }
+
+    blocDiv.appendChild(blocBody);
+    body.appendChild(blocDiv);
+  });
+
+  body.appendChild(buildNewBlocRow());
+}
+
+function startRenameLibBloc(head, bloc) {
+  head.onclick = null;
+  head.innerHTML = '';
+  head.appendChild(inlineEditRow(DB[bloc].label, val => {
+    if (val && val !== DB[bloc].label && renameBloc(bloc, val)) {
+      showToast('✓ Bloc renommé');
+      buildBrowserFull();
+    }
+    renderLibSection();
+  }, () => renderLibSection()));
+}
+
+function buildNewBlocRow() {
+  const wrap = document.createElement('div');
+  wrap.className = 'lib-new-row';
+  wrap.style.marginTop = '14px';
+  const input = document.createElement('input');
+  input.type = 'text'; input.maxLength = 30; input.placeholder = 'Nouveau bloc… (ex. Crossfit)';
+  const btn = document.createElement('button');
+  btn.className = 'lib-new-btn'; btn.textContent = '+ Nouveau bloc';
+  const commit = () => {
+    if (addBloc(input.value)) { showToast('✓ Bloc ajouté'); buildBrowserFull(); renderLibSection(); }
+  };
+  btn.onclick = commit;
+  input.onkeydown = e => { if (e.key === 'Enter') commit(); };
+  wrap.appendChild(input); wrap.appendChild(btn);
+  return wrap;
+}
+
+function buildLibCatBlock(bloc, sub, exList, cmap) {
+  const isCustomCat = customCatKeys.has(catKey(bloc, sub));
+  const wrap = document.createElement('div');
+  wrap.className = 'lib-cat';
+
+  const head = document.createElement('div');
+  head.className = 'lib-cat-head';
+  const nameEl = document.createElement('span');
+  nameEl.className = 'lib-cat-name';
+  nameEl.textContent = sub;
+  head.appendChild(nameEl);
+
+  if (isCustomCat) {
+    head.appendChild(iconBtn('✏️', 'Renommer la catégorie', () => startRenameLibCategory(head, bloc, sub)));
+    head.appendChild(iconBtn('🗑️', 'Supprimer la catégorie', () => { if (deleteCategory(bloc, sub)) { buildBrowserFull(); renderLibSection(); } }, true));
+  } else {
+    const badge = document.createElement('span');
+    badge.className = 'lib-badge';
+    badge.textContent = 'livré';
+    head.appendChild(badge);
+  }
+  wrap.appendChild(head);
+
+  const list = document.createElement('div');
+  list.className = 'lib-cat-exlist';
+  exList.forEach(name => list.appendChild(buildLibExRow(bloc, sub, name, cmap)));
+  wrap.appendChild(list);
+
+  wrap.appendChild(buildNewExRow(bloc, sub));
+  return wrap;
+}
+
+function buildLibExRow(bloc, sub, name, cmap) {
+  const row = document.createElement('div');
+  row.className = 'lib-ex-row';
+  const nameEl = document.createElement('span');
+  nameEl.className = 'lib-ex-name';
+  nameEl.textContent = name;
+  row.appendChild(nameEl);
+
+  if (cmap.has(exKey(bloc, sub, name))) {
+    row.appendChild(iconBtn('✏️', 'Renommer', () => startRenameLibExercise(row, bloc, sub, name)));
+    row.appendChild(iconBtn('↔', 'Déplacer', () => startMoveLibExercise(row, bloc, sub, name)));
+    row.appendChild(iconBtn('🗑️', 'Supprimer', () => { if (deleteLibExercise(bloc, sub, name)) { buildBrowserFull(); renderLibSection(); } }, true));
+  } else {
+    const badge = document.createElement('span');
+    badge.className = 'lib-badge';
+    badge.textContent = 'livré';
+    row.appendChild(badge);
+  }
+  return row;
+}
+
+function startRenameLibCategory(head, bloc, oldName) {
+  head.innerHTML = '';
+  head.appendChild(inlineEditRow(oldName, val => {
+    if (val && val !== oldName && renameCategory(bloc, oldName, val)) {
+      showToast('✓ Catégorie renommée');
+      buildBrowserFull();
+    }
+    renderLibSection();
+  }, () => renderLibSection()));
+}
+
+function startRenameLibExercise(row, bloc, sub, oldName) {
+  row.innerHTML = '';
+  row.appendChild(inlineEditRow(oldName, val => {
+    if (val && val !== oldName && renameLibExercise(bloc, sub, oldName, val)) {
+      showToast('✓ Exercice renommé');
+      buildBrowserFull();
+    }
+    renderLibSection();
+  }, () => renderLibSection()));
+}
+
+function startMoveLibExercise(row, bloc, sub, name) {
+  row.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'cat-row-edit';
+  const sel = document.createElement('select');
+  sel.innerHTML = libDestinationOptions(bloc, sub);
+  wrap.appendChild(sel);
+  wrap.appendChild(iconBtn('✓', 'Déplacer ici', () => {
+    const [newBloc, newSub] = sel.value.split('|');
+    if (moveLibExercise(bloc, sub, name, newBloc, newSub || '')) {
+      showToast('✓ Exercice déplacé');
+      buildBrowserFull();
+    }
+    renderLibSection();
+  }));
+  wrap.appendChild(iconBtn('✕', 'Annuler', () => renderLibSection()));
+  row.appendChild(wrap);
+}
+
+function buildNewCatRow(bloc) {
+  const wrap = document.createElement('div');
+  wrap.className = 'lib-new-row';
+  const input = document.createElement('input');
+  input.type = 'text'; input.maxLength = 40; input.placeholder = 'Nouvelle sous-catégorie…';
+  const btn = document.createElement('button');
+  btn.className = 'lib-new-btn'; btn.textContent = '+ Ajouter';
+  const commit = () => {
+    if (addCategory(bloc, input.value)) { showToast('✓ Catégorie ajoutée'); buildBrowserFull(); renderLibSection(); }
+  };
+  btn.onclick = commit;
+  input.onkeydown = e => { if (e.key === 'Enter') commit(); };
+  wrap.appendChild(input); wrap.appendChild(btn);
+  return wrap;
+}
+
+function buildNewExRow(bloc, sub) {
+  const wrap = document.createElement('div');
+  wrap.className = 'lib-new-row';
+  const input = document.createElement('input');
+  input.type = 'text'; input.maxLength = 60; input.placeholder = 'Ajouter un exercice…';
+  const btn = document.createElement('button');
+  btn.className = 'lib-new-btn'; btn.textContent = '+ Ajouter';
+  const commit = () => {
+    if (addLibExercise(bloc, sub, input.value)) { showToast('✓ Exercice ajouté'); buildBrowserFull(); renderLibSection(); }
+  };
+  btn.onclick = commit;
+  input.onkeydown = e => { if (e.key === 'Enter') commit(); };
+  wrap.appendChild(input); wrap.appendChild(btn);
+  return wrap;
+}
+
+// ── Ajout d'un exercice à la bibliothèque (à la volée, depuis une carte) ──
+// Gestion complète des catégories/exercices : voir la section « Bibliothèque
+// d'exercices » de l'écran principal (renderLibSection). Cette modale ne fait
+// que ranger un exercice tapé sur une carte dans une catégorie existante.
 let pendingAddCard = null, pendingAddName = '';
 
 function openAddExModal(name, card) {
@@ -1849,12 +2649,14 @@ function openAddExModal(name, card) {
   const sel = document.getElementById('addex-cat');
   let opts = '';
   Object.entries(DB).forEach(([b, data]) => {
+    // Bloc plat (SBD, Haltéro, Cardio, Hyrox) : option « sans catégorie »
+    if (data.exercises) {
+      opts += `<option value="${b}|">${data.label}</option>`;
+    }
     if (data.subs) {
-      Object.keys(data.subs).forEach(sub => {
+      Object.keys(data.subs).sort((a,b2) => a.localeCompare(b2,'fr')).forEach(sub => {
         opts += `<option value="${b}|${sub}">${data.label} — ${sub}</option>`;
       });
-    } else {
-      opts += `<option value="${b}|">${data.label}</option>`;
     }
   });
   sel.innerHTML = opts;
@@ -1898,6 +2700,7 @@ function confirmAddEx() {
     refreshLoad(pendingAddCard);
   }
   buildBrowserFull();
+  renderLibSection();
   document.getElementById('addex-modal').classList.remove('open');
   pendingAddCard = null;
   doAutosave();
@@ -1953,8 +2756,14 @@ function updateCardBloc(card, bloc) {
   if (!card) return;
   card.className = `ex-card bloc-${bloc}`;
   card.dataset.bloc = bloc;
+  if (isBuiltinBloc(bloc)) card.removeAttribute('data-custom-bloc');
+  else card.setAttribute('data-custom-bloc', '');
   const dot = card.querySelector('.bloc-dot');
-  if (dot) dot.className = `bloc-dot bloc-${bloc}`;
+  if (dot) {
+    dot.className = `bloc-dot bloc-${bloc}`;
+    if (isBuiltinBloc(bloc)) dot.removeAttribute('data-custom-bloc');
+    else dot.setAttribute('data-custom-bloc', '');
+  }
 
   // Reconstruit la cellule Charge de CHAQUE sous-ligne en gardant les valeurs
   card.querySelectorAll('.sub-row').forEach(row => {
@@ -1982,14 +2791,15 @@ function buildBrowserFull() {
   body.innerHTML = '';
   Object.entries(DB).forEach(([bloc, data]) => {
     const bt = document.createElement('div');
-    bt.className = `browser-bloc-title ${data.color}`;
+    bt.className = 'browser-bloc-title' + (isBuiltinBloc(bloc) ? ` ${bloc}` : '');
+    if (!isBuiltinBloc(bloc)) bt.setAttribute('data-custom-bloc', '');
     bt.textContent = data.label;
     bt.dataset.bloc = bloc;
     body.appendChild(bt);
 
     if (data.exercises) {
       data.exercises.forEach(ex => {
-        body.appendChild(makeExRow(ex.n, bloc, data.color));
+        body.appendChild(makeExRow(ex.n, bloc));
       });
     }
     if (data.subs) {
@@ -1998,16 +2808,20 @@ function buildBrowserFull() {
         st.className = 'browser-sub-title';
         st.textContent = sub;
         body.appendChild(st);
-        exs.forEach(n => body.appendChild(makeExRow(n, bloc, data.color)));
+        exs.forEach(n => body.appendChild(makeExRow(n, bloc)));
       });
     }
   });
 }
 
-function makeExRow(name, bloc, color) {
+function makeExRow(name, bloc) {
   const div = document.createElement('div');
   div.className = 'browser-ex';
-  div.innerHTML = `<div class="browser-ex-dot ${color}"></div>${name}`;
+  const dot = document.createElement('div');
+  dot.className = 'browser-ex-dot' + (isBuiltinBloc(bloc) ? ` ${bloc}` : '');
+  if (!isBuiltinBloc(bloc)) dot.setAttribute('data-custom-bloc', '');
+  div.appendChild(dot);
+  div.appendChild(document.createTextNode(name));
   div.onclick = () => selectExFromBrowser(name, bloc);
   return div;
 }
@@ -2036,8 +2850,7 @@ function filterBrowser(q) {
   if (!q.trim()) { buildBrowserFull(); return; }
   const ql = q.toLowerCase();
   ALL_EX.filter(e => e.name.toLowerCase().includes(ql)).forEach(e => {
-    const color = DB[e.bloc].color;
-    body.appendChild(makeExRow(e.name, e.bloc, color));
+    body.appendChild(makeExRow(e.name, e.bloc));
   });
 }
 
@@ -2264,6 +3077,10 @@ function loadJSON(event) {
       }
       if (!sections.length) sections = [ newSection('') ];
 
+      // Complète les id manquants (anciens exports, fichiers externes) sans
+      // toucher à ceux déjà présents (ré-import depuis la plateforme).
+      sections.forEach(sec => (sec.weeks || []).forEach(week => (week || []).forEach(day => ensureIds(day))));
+
       loadSection(0);
       renderSecTabs();
       renderTabs();
@@ -2347,12 +3164,10 @@ async function generateExcelWithWeeks(selectedWeeks) {
     muted:   '8A8477',
     accent:  'C25562',
     deep:    '7B2028',
-    sbd:     '4A9EFF',  halte: 'F5A623',
-    muscu:   '4ADF8A',  cardio:'BF5AF2',
-    hyrox:   'C0601A',  etire: 'E84D8A',
+    // Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
+    // l'accent existant, pour tous les blocs (livrés ou perso).
+    blocFlash: 'E63A54',
   };
-
-  const BLOC_C = { sbd:C.sbd, halte:C.halte, muscu:C.muscu, cardio:C.cardio, hyrox:C.hyrox, etire:C.etire };
 
   const fill = h => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+h } });
   const fnt  = (h, bold=false, sz=10, italic=false) =>
@@ -2425,7 +3240,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
         exs.forEach((ex, ei) => {
           const b      = ex.bloc||'muscu';
           const isAuto = b==='sbd'||b==='halte';
-          const bClr   = BLOC_C[b] || C.text;
+          const bClr   = C.blocFlash;
           const isLastEx = ei===exs.length-1;
           const subs   = (ex.subRows&&ex.subRows.length)
             ? ex.subRows
@@ -2560,10 +3375,9 @@ async function generatePDF() {
   //  calcul d'échelle, au dessin et aux sauts de page — plus de double
   //  comptabilité, plus de troncature des consignes.
   // ═══════════════════════════════════════════════════════════════
-  const BLOC_HEX = {
-    sbd:[74,158,255], halte:[245,166,35], muscu:[34,192,105],
-    cardio:[191,90,242], hyrox:[192,96,26], etire:[232,77,138]
-  };
+  // Plus de code couleur par bloc : un seul rouge bordeaux pour tous
+  // (liseré des exercices), livrés ou perso.
+  const BLOC_SPINE_RGB = [230, 58, 84];
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;
@@ -2843,7 +3657,7 @@ async function generatePDF() {
       // Cellule exercice : fond gris + liseré coloré du bloc
       doc.setFillColor(245,245,245);
       doc.rect(ML, top, exW, h, 'F');
-      const c = BLOC_HEX[ex.bloc] || [170,170,170];
+      const c = BLOC_SPINE_RGB;
       doc.setFillColor(c[0], c[1], c[2]);
       doc.rect(ML, top, SPINE_W, h, 'F');
 

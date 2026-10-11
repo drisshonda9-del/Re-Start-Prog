@@ -1118,8 +1118,8 @@ function prRow(exName) {
   const row = document.createElement('div');
   row.className = 'pr-row';
   row.innerHTML = `
-    <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
-    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${exName.replace(/"/g,'&quot;')}" value="${val}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+    <div class="pr-name">${esc(main)}${sub ? `<small>(${esc(sub)})</small>` : ''}</div>
+    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${esc(exName)}" value="${esc(val)}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
   removeBtn.className = 'pr-remove';
@@ -1255,6 +1255,16 @@ function onPRChange(input) {
 }
 
 function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+// Échappe une chaîne avant insertion dans du HTML (texte ou attribut entre guillemets).
+// Les noms d'exercice, de jour, de section, de bloc et les commentaires sont librement
+// saisis (ou importés depuis un JSON) : sans ça, un « " » casse un champ et un
+// « <img onerror> » s'exécute.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // Registre des 1RM : source de vérité, indépendante de l'affichage.
 let PR = {};
@@ -1402,8 +1412,8 @@ let ctxTimer = null, ctxMoved = false;
 function openCtx(x, y, title, items) {
   const menu = document.getElementById('ctx-menu');
   const back = document.getElementById('ctx-backdrop');
-  menu.innerHTML = `<div class="ctx-head">${title}</div>`
-    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${it.label}</button>`).join('');
+  menu.innerHTML = `<div class="ctx-head">${esc(title)}</div>`
+    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${esc(it.label)}</button>`).join('');
   menu.querySelectorAll('.ctx-item').forEach(btn => {
     btn.onclick = () => {
       const it = items[+btn.dataset.i];
@@ -1460,8 +1470,8 @@ function renderSecTabs() {
   let html = '';
   sections.forEach((_, i) => {
     const act = i === activeSection;
-    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
-          + `<span class="sec-label">${sectionLabel(i)}</span>`
+    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${esc(sectionLabel(i))}">`
+          + `<span class="sec-label">${esc(sectionLabel(i))}</span>`
           + (act ? `<span class="sec-menu">⋯</span>` : '')
           + `</button>`;
   });
@@ -1574,7 +1584,7 @@ function renderDayTabs() {
   for (let d = 0; d < nD; d++) {
     const dn = getDayName(activeWeek, d);
     const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
-    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${esc(label)}">${esc(label)}</button>`;
   }
   html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
   el.innerHTML = html;
@@ -1783,7 +1793,7 @@ function appendExCard(dayIdx, ex) {
     <div class="ex-top">
       <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
       <div class="ex-name-wrap">
-        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
+        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${esc(ex.exercise)}"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
         <div class="ac-list"></div>
@@ -1798,11 +1808,11 @@ function appendExCard(dayIdx, ex) {
     <div class="sub-rows" id="subrows-${dlId}"></div>
     <div class="ex-line">
       <span class="ex-line-tag coach">Coach</span>
-      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${ex.note||''}">
+      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${esc(ex.note)}">
     </div>
     <div class="ex-line">
       <span class="ex-line-tag client">Client</span>
-      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${ex.conseil||''}" readonly>
+      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${esc(ex.conseil)}" readonly>
     </div>`;
 
   list.appendChild(card);
@@ -1835,7 +1845,7 @@ function chargeCellHTML(bloc, sr, valueOverride, exName) {
   return `<span class="cell-lbl">Charge</span>
     <div style="display:flex;align-items:center;gap:2px">
       <input class="cell-charge-input${isAuto?' load-auto':''}" type="text" inputmode="decimal"
-             placeholder="—" value="${val}" ${edited} style="flex:1;min-width:0"
+             placeholder="—" value="${esc(val)}" ${edited} style="flex:1;min-width:0"
              oninput="onChargeInput(this)${isAuto?';onChargeManualEdit(this)':''}">
       <select class="unit-select"${hidden} data-w="28">${unitOpts(bloc, (sr && sr.unit) || 'kg')}</select>
     </div>`;
@@ -2284,14 +2294,14 @@ function acRender(input) {
 
   let html = res.map(e => {
     const col = DB[e.bloc] ? DB[e.bloc].color : 'muscu';
-    return `<div class="ac-item" data-n="${e.name.replace(/"/g,'&quot;')}" data-b="${e.bloc}">`
-         + `<span class="ac-dot browser-ex-dot ${col}"></span>${e.name}</div>`;
+    return `<div class="ac-item" data-n="${esc(e.name)}" data-b="${esc(e.bloc)}">`
+         + `<span class="ac-dot browser-ex-dot ${col}"></span>${esc(e.name)}</div>`;
   }).join('');
 
   // Proposition d'ajout si la saisie ne correspond à aucun exercice connu
   const exact = q && ALL_EX.some(e => e.name.toLowerCase() === q);
   if (q && !exact) {
-    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${input.value.trim()} » à la bibliothèque</div>`;
+    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${esc(input.value.trim())} » à la bibliothèque</div>`;
   }
 
   if (!html) { list.classList.remove('open'); return; }
@@ -2665,12 +2675,12 @@ function libDestinationOptions(currentBloc, currentSub) {
   Object.entries(DB).forEach(([b, data]) => {
     if (data.exercises) {
       const sel = (b === currentBloc && !currentSub) ? ' selected' : '';
-      opts += `<option value="${b}|"${sel}>${data.label}</option>`;
+      opts += `<option value="${esc(b)}|"${sel}>${esc(data.label)}</option>`;
     }
     if (data.subs) {
       Object.keys(data.subs).sort((a,c) => a.localeCompare(c,'fr')).forEach(sub => {
         const sel = (b === currentBloc && sub === currentSub) ? ' selected' : '';
-        opts += `<option value="${b}|${sub}"${sel}>${data.label} — ${sub}</option>`;
+        opts += `<option value="${esc(b)}|${esc(sub)}"${sel}>${esc(data.label)} — ${esc(sub)}</option>`;
       });
     }
   });
@@ -2941,11 +2951,11 @@ function openAddExModal(name, card) {
   Object.entries(DB).forEach(([b, data]) => {
     // Bloc plat (SBD, Haltéro, Cardio, Hyrox) : option « sans catégorie »
     if (data.exercises) {
-      opts += `<option value="${b}|">${data.label}</option>`;
+      opts += `<option value="${esc(b)}|">${esc(data.label)}</option>`;
     }
     if (data.subs) {
       Object.keys(data.subs).sort((a,b2) => a.localeCompare(b2,'fr')).forEach(sub => {
-        opts += `<option value="${b}|${sub}">${data.label} — ${sub}</option>`;
+        opts += `<option value="${esc(b)}|${esc(sub)}">${esc(data.label)} — ${esc(sub)}</option>`;
       });
     }
   });

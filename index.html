@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RE-START Programmation</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:wght@600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
 
@@ -116,7 +115,6 @@ header {
   border: none;
   cursor: pointer;
 }
-.btn-excel { background: var(--accent-deep); color: var(--cream); }
 .btn-pdf   { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-save  { background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer; }
 .btn-load  { background: transparent; color: var(--text); border: 1px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -636,15 +634,6 @@ input.inp-pct[data-user-edited] { color: var(--accent); font-weight: 600; }
 .cat-row-edit { flex: 1; display: flex; gap: 6px; min-width: 0; }
 .cat-row-edit input, .cat-row-edit select { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--accent); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
 
-/* ── EXCEL WEEK CHECKS ── */
-.week-check-item {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 6px; padding: 10px 14px; cursor: pointer;
-}
-.week-check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
-.week-check-item span { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--text); }
-
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
@@ -671,7 +660,6 @@ input.inp-pct[data-user-edited] { color: var(--accent); font-weight: 600; }
       📂<input type="file" accept=".json" onchange="loadJSON(event)" style="display:none">
     </label>
     <button class="btn-header btn-pdf" onclick="generatePDF()">PDF</button>
-    <button class="btn-header btn-excel" onclick="openExcelModal()">EXCEL</button>
   </div>
 </header>
 
@@ -745,21 +733,6 @@ input.inp-pct[data-user-edited] { color: var(--accent); font-weight: 600; }
       <div class="bloc-opt etire"  onclick="pickBloc('etire')"  style="border-color:var(--etire);color:var(--etire);background:var(--etire-bg)">🩷 Étirements</div>
     </div>
     <button class="modal-cancel" onclick="closeBlocModal()">Annuler</button>
-  </div>
-</div>
-
-<!-- EXCEL WEEK SELECTOR -->
-<div class="modal" id="excel-modal" onclick="closeExcelModal(event)">
-  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
-    <div class="modal-title">Semaines à exporter</div>
-    <div id="excel-week-checks" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <button onclick="excelSelectAll(true)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">TOUT</button>
-      <button onclick="excelSelectAll(false)" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">AUCUN</button>
-      <button onclick="excelSelectCurrent()" style="background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px;border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer">ACTUELLE</button>
-    </div>
-    <button onclick="doGenerateExcel()" style="width:100%;background:var(--accent-deep);border:none;color:var(--cream);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:2px;padding:12px;border-radius:8px;cursor:pointer;margin-bottom:8px">EXPORTER</button>
-    <button class="modal-cancel" onclick="closeExcelModal()">Annuler</button>
   </div>
 </div>
 
@@ -2336,7 +2309,7 @@ function acRender(input) {
 //  le coach se comporte à l'identique — même stockage (exercices/sous-
 //  catégories), même sélecteur. Plus de code couleur par bloc (décision
 //  utilisateur) : --sbd/--halte/…/--bloc-custom pointent tous vers le même
-//  rouge bordeaux (--bloc-custom ci-dessous, cartes/dot/titres/PDF/Excel).
+//  rouge bordeaux (--bloc-custom ci-dessous, cartes/dot/titres/PDF).
 // ═══════════════════════════════════════════════════
 const BUILTIN_BLOCS = new Set(['sbd', 'halte', 'muscu', 'cardio', 'hyrox', 'etire']);
 function isBuiltinBloc(bloc) { return BUILTIN_BLOCS.has(bloc); }
@@ -3406,252 +3379,6 @@ function loadJSON(event) {
   reader.readAsText(file);
   // Reset input so same file can be reloaded
   event.target.value = '';
-}
-
-// ═══════════════════════════════════════════════════
-//  EXCEL MODAL
-// ═══════════════════════════════════════════════════
-function openExcelModal() {
-  collectAll();
-  const nW = nWeeks();
-  if (nW === 0) { showToast('Crée d\'abord un programme'); return; }
-  const list = document.getElementById('excel-week-checks');
-  list.innerHTML = '';
-  for (let i = 0; i < nW; i++) {
-    const item = document.createElement('label');
-    item.className = 'week-check-item';
-    item.innerHTML = `<input type="checkbox" value="${i}" checked><span>SEMAINE ${i+1}</span>`;
-    list.appendChild(item);
-  }
-  document.getElementById('excel-modal').classList.add('open');
-}
-function closeExcelModal(e) {
-  if (!e || e.target === document.getElementById('excel-modal')) {
-    document.getElementById('excel-modal').classList.remove('open');
-  }
-}
-function excelSelectAll(val) {
-  document.querySelectorAll('#excel-week-checks input').forEach(c => c.checked = val);
-}
-function excelSelectCurrent() {
-  excelSelectAll(false);
-  const cb = document.querySelector(`#excel-week-checks input[value="${activeWeek}"]`);
-  if (cb) cb.checked = true;
-}
-function doGenerateExcel() {
-  const checks = document.querySelectorAll('#excel-week-checks input:checked');
-  const selected = Array.from(checks).map(c => +c.value);
-  if (selected.length === 0) { showToast('Sélectionne au moins une semaine'); return; }
-  document.getElementById('excel-modal').classList.remove('open');
-  generateExcelWithWeeks(selected);
-}
-
-// ═══════════════════════════════════════════════════
-//  GENERATE EXCEL — layout vertical, colonnes fixes
-// ═══════════════════════════════════════════════════
-async function generateExcelWithWeeks(selectedWeeks) {
-  if (!window.ExcelJS) {
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  const progName = document.getElementById('prog-name').value || 'Programme';
-  const athlete  = document.getElementById('athlete').value || '';
-  const wb       = new ExcelJS.Workbook();
-
-  // ── Palette RE-START ──
-  const C = {
-    bg:      '0A0A0A',
-    surface: '141416',
-    surface2:'1C1C1F',
-    border:  '2B2B30',
-    text:    'EFE7D6',
-    muted:   '8A8477',
-    accent:  'C25562',
-    deep:    '7B2028',
-    // Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
-    // l'accent existant, pour tous les blocs (livrés ou perso).
-    blocFlash: 'C25562',
-  };
-
-  const fill = h => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+h } });
-  const fnt  = (h, bold=false, sz=10, italic=false) =>
-    ({ name:'Calibri', color:{ argb:'FF'+h }, bold, size:sz, italic });
-  const al   = (h='left', v='middle', wrap=false) =>
-    ({ horizontal:h, vertical:v, wrapText:wrap });
-  const bdr  = h => { const s={style:'thin',color:{argb:'FF'+h}}; return {top:s,left:s,bottom:s,right:s}; };
-
-  selectedWeeks.forEach(wIdx => {
-    const ws  = wb.addWorksheet('Semaine '+(wIdx+1));
-    const nD  = nDaysOf(wIdx);
-
-    // Colonne A plus large pour les noms complets
-    [40, 7, 7, 6, 7, 13, 8, 48].forEach((w, i) => { ws.getColumn(i+1).width = w; });
-
-    ws.pageSetup = {
-      orientation:'landscape', fitToPage:true,
-      fitToWidth:1, fitToHeight:0,
-      margins:{ left:0.4, right:0.4, top:0.5, bottom:0.5, header:0, footer:0 }
-    };
-
-    let r = 1;
-
-    // ── TITRE ──
-    ws.getRow(r).height = 32;
-    const tc = ws.getCell(r,1);
-    const secTxt = hasSections() && sections[activeSection].name ? '   ·   '+sections[activeSection].name.toUpperCase() : '';
-    tc.value = 'S'+(wIdx+1)+'   '+progName.toUpperCase()+secTxt+(athlete?'   —   '+athlete.toUpperCase():'');
-    tc.fill = fill(C.bg); tc.font = fnt(C.accent, true, 15);
-    tc.alignment = al('left','middle');
-    ws.mergeCells(r,1,r,8); r++;
-
-    // Ligne accent
-    ws.getRow(r).height = 3;
-    for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.deep);
-    r++;
-    ws.getRow(r).height = 10;
-    for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.bg);
-    r++;
-
-    for (let d = 0; d < nD; d++) {
-      const dn  = getDayName(wIdx, d);
-      const exs = (weekData[wIdx]&&weekData[wIdx][d]) || [];
-
-      // ── DAY header ──
-      ws.getRow(r).height = 24;
-      const dc = ws.getCell(r,1);
-      dc.value = 'DAY '+(d+1)+(dn?'   '+dn.toUpperCase():'');
-      dc.fill = fill(C.surface2); dc.font = fnt(C.text, true, 12);
-      dc.alignment = al('left','middle');
-      ws.mergeCells(r,1,r,8); r++;
-
-      // ── En-têtes colonnes ──
-      ws.getRow(r).height = 15;
-      ['EXERCICE','SETS','REPS','RPE','%','CHARGE','REPOS','COMMENTAIRES'].forEach((h,i) => {
-        const c = ws.getCell(r,i+1);
-        c.value = h;
-        c.fill  = fill(C.surface);
-        c.font  = fnt(C.muted, true, 8);
-        c.alignment = al(i===0||i===7?'left':'center','middle');
-        c.border = bdr(C.border);
-      });
-      r++;
-
-      if (exs.length===0) {
-        ws.getRow(r).height = 18;
-        for (let i=1;i<=8;i++) { ws.getCell(r,i).fill=fill(C.surface); ws.getCell(r,i).border=bdr(C.border); }
-        r++;
-      } else {
-        exs.forEach((ex, ei) => {
-          const b      = ex.bloc||'muscu';
-          const isAuto = getPR(ex.exercise) > 0;
-          const bClr   = C.blocFlash;
-          const isLastEx = ei===exs.length-1;
-          const subs   = (ex.subRows&&ex.subRows.length)
-            ? ex.subRows
-            : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,rest:ex.rest,
-                charge:ex.charge,unit:ex.unit,chargeUserEdited:ex.chargeUserEdited}];
-          const detail = [ex.note,ex.conseil].filter(Boolean).join(' — ');
-
-          subs.forEach((sr, si) => {
-            const u  = sr.unit||'kg';
-            const chRaw = isAuto&&!sr.chargeUserEdited
-              ? computeAutoLoad({exercise:ex.exercise,pct:sr.pct,bloc:b})
-              : (sr.charge?sr.charge+' '+u:'');
-            const ch = chRaw==='0 kg'||chRaw==='0'?'—':(chRaw||'—');
-
-            ws.getRow(r).height = 18;
-
-            // Col A — nom coloré bloc, fond surface uniforme
-            const ec = ws.getCell(r,1);
-            ec.value = si===0?(ex.exercise||''):'';
-            ec.fill  = fill(C.surface);
-            ec.font  = fnt(si===0?bClr:C.muted, true, 10);
-            ec.alignment = al('left','middle');
-            ec.border = bdr(C.border);
-
-            // Cols B-F — fond surface, texte clair, PAS de couleur bloc
-            [sr.sets||'',sr.reps||'',sr.rpe?String(sr.rpe).replace('.',','):'',sr.pct?sr.pct+'%':''].forEach((v,i) => {
-              const c = ws.getCell(r,i+2);
-              c.value = v;
-              c.fill  = fill(C.surface);
-              c.font  = fnt(C.text, false, 10);
-              c.alignment = al('center','middle');
-              c.border = bdr(C.border);
-            });
-
-            // Col F — CHARGE en vert accent
-            const chc = ws.getCell(r,6);
-            chc.value = ch;
-            chc.fill  = fill(C.surface);
-            chc.font  = fnt(C.accent, true, 10);
-            chc.alignment = al('center','middle');
-            chc.border = bdr(C.border);
-
-            // Col G — Repos
-            const rc = ws.getCell(r,7);
-            rc.value = sr.rest || '';
-            rc.fill  = fill(C.surface);
-            rc.font  = fnt(C.text, false, 10);
-            rc.alignment = al('center','middle');
-            rc.border = bdr(C.border);
-
-            // Col H — Commentaires vide
-            const gc = ws.getCell(r,8);
-            gc.value = '';
-            gc.fill  = fill(C.surface2);
-            gc.font  = fnt(C.muted, false, 10);
-            gc.alignment = al('left','middle');
-            gc.border = bdr(C.border);
-
-            r++;
-          });
-
-          // Note / conseil
-          if (detail) {
-            ws.getRow(r).height = 13;
-            const nc = ws.getCell(r,1);
-            nc.value = detail;
-            nc.fill  = fill(C.surface);
-            nc.font  = fnt(C.muted, false, 8, true);
-            nc.alignment = al('left','middle',true);
-            nc.border = bdr(C.border);
-            for (let i=2;i<=8;i++) {
-              ws.getCell(r,i).fill = fill(C.surface);
-              ws.getCell(r,i).border = bdr(C.border);
-            }
-            r++;
-          }
-
-          // Séparateur fin entre exercices
-          if (!isLastEx) {
-            ws.getRow(r).height = 3;
-            for (let i=1;i<=8;i++) {
-              ws.getCell(r,i).fill = fill(C.surface2);
-            }
-            r++;
-          }
-        });
-      }
-
-      // Espace entre jours
-      ws.getRow(r).height = 14;
-      for (let i=1;i<=8;i++) ws.getCell(r,i).fill = fill(C.bg);
-      r++;
-    }
-  });
-
-  const secSuffix = hasSections() && sections[activeSection].name
-    ? ' - ' + sections[activeSection].name.replace(/[^\w\s-]/g,'').trim() : '';
-  const fname = ((progName.replace(/[^\w\s-]/g,'')||'Programme').trim()+secSuffix)+'.xlsx';
-  const buf   = await wb.xlsx.writeBuffer();
-  const blob  = new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  shareOrDownload(blob,fname,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  showToast('✓ Excel généré !');
 }
 
 // ═══════════════════════════════════════════════════

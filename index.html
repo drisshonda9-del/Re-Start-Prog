@@ -25,20 +25,20 @@
   /* Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
      --accent/--accent-deep pour bien ressortir, partagé par les 6 blocs
      livrés et par tout bloc créé par le coach. */
-  --sbd:     #e63a54;
-  --halte:   #e63a54;
-  --muscu:   #e63a54;
-  --cardio:  #e63a54;
-  --hyrox:   #e63a54;
-  --etire:   #e63a54;
-  --sbd-bg:    rgba(230,58,84,0.08);
-  --halte-bg:  rgba(230,58,84,0.08);
-  --muscu-bg:  rgba(230,58,84,0.08);
-  --cardio-bg: rgba(230,58,84,0.08);
-  --hyrox-bg:  rgba(230,58,84,0.08);
-  --etire-bg:  rgba(230,58,84,0.08);
-  --bloc-custom:    #e63a54;
-  --bloc-custom-bg: rgba(230,58,84,0.08);
+  --sbd:     #C25562;
+  --halte:   #C25562;
+  --muscu:   #C25562;
+  --cardio:  #C25562;
+  --hyrox:   #C25562;
+  --etire:   #C25562;
+  --sbd-bg:    rgba(194,85,98,0.08);
+  --halte-bg:  rgba(194,85,98,0.08);
+  --muscu-bg:  rgba(194,85,98,0.08);
+  --cardio-bg: rgba(194,85,98,0.08);
+  --hyrox-bg:  rgba(194,85,98,0.08);
+  --etire-bg:  rgba(194,85,98,0.08);
+  --bloc-custom:    #C25562;
+  --bloc-custom-bg: rgba(194,85,98,0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -3166,7 +3166,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
     deep:    '7B2028',
     // Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
     // l'accent existant, pour tous les blocs (livrés ou perso).
-    blocFlash: 'E63A54',
+    blocFlash: 'C25562',
   };
 
   const fill = h => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+h } });
@@ -3377,7 +3377,7 @@ async function generatePDF() {
   // ═══════════════════════════════════════════════════════════════
   // Plus de code couleur par bloc : un seul rouge bordeaux pour tous
   // (liseré des exercices), livrés ou perso.
-  const BLOC_SPINE_RGB = [230, 58, 84];
+  const BLOC_SPINE_RGB = [194, 85, 98];
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;

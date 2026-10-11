@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>RE-START Programmation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -25,20 +25,20 @@
   /* Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
      --accent/--accent-deep pour bien ressortir, partagé par les 6 blocs
      livrés et par tout bloc créé par le coach. */
-  --sbd:     #e63a54;
-  --halte:   #e63a54;
-  --muscu:   #e63a54;
-  --cardio:  #e63a54;
-  --hyrox:   #e63a54;
-  --etire:   #e63a54;
-  --sbd-bg:    rgba(230,58,84,0.08);
-  --halte-bg:  rgba(230,58,84,0.08);
-  --muscu-bg:  rgba(230,58,84,0.08);
-  --cardio-bg: rgba(230,58,84,0.08);
-  --hyrox-bg:  rgba(230,58,84,0.08);
-  --etire-bg:  rgba(230,58,84,0.08);
-  --bloc-custom:    #e63a54;
-  --bloc-custom-bg: rgba(230,58,84,0.08);
+  --sbd:     #C25562;
+  --halte:   #C25562;
+  --muscu:   #C25562;
+  --cardio:  #C25562;
+  --hyrox:   #C25562;
+  --etire:   #C25562;
+  --sbd-bg:    rgba(194,85,98,0.08);
+  --halte-bg:  rgba(194,85,98,0.08);
+  --muscu-bg:  rgba(194,85,98,0.08);
+  --cardio-bg: rgba(194,85,98,0.08);
+  --hyrox-bg:  rgba(194,85,98,0.08);
+  --etire-bg:  rgba(194,85,98,0.08);
+  --bloc-custom:    #C25562;
+  --bloc-custom-bg: rgba(194,85,98,0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -147,31 +147,14 @@ select option { background: #1a1d25; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* ── PR TABLE ── */
-.pr-section-title {
-  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
-  text-transform: uppercase; padding: 8px 0 6px; margin-top: 12px;
-  border-bottom: 1px solid var(--border); margin-bottom: 4px;
-}
-.pr-section-title.sbd   { color: var(--sbd); }
-.pr-section-title.halte { color: var(--halte); }
 .pr-table { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
-.pr-section-title.used { color: var(--accent); border-bottom-color: var(--accent-deep); }
 .pr-hint {
   font-size: 12px; color: var(--muted); line-height: 1.5;
   padding: 14px 12px; text-align: center;
   border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 12px;
 }
-.pr-toggle {
-  width: 100%; background: transparent; border: 1px solid var(--border);
-  color: var(--muted); padding: 11px; border-radius: 6px; cursor: pointer;
-  font-family: 'DM Mono', monospace; font-size: 10px;
-  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;
-}
-.pr-toggle:active { border-color: var(--accent); color: var(--accent); }
-.pr-row { display: grid; grid-template-columns: 1fr 90px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+.pr-row { display: grid; grid-template-columns: 1fr 90px 22px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
 .pr-row:last-child { border-bottom: none; }
-.pr-row.sbd   { border-left: 2px solid var(--sbd); }
-.pr-row.halte { border-left: 2px solid var(--halte); }
 .pr-name { font-size: 12px; line-height: 1.3; }
 .pr-name small { display: block; color: var(--muted); font-size: 10px; }
 .pr-input {
@@ -180,6 +163,15 @@ select option { background: #1a1d25; }
   padding: 6px 8px; border-radius: 4px; width: 100%; text-align: right; outline: none;
 }
 .pr-input:focus { border-color: var(--accent); }
+.pr-remove { background: transparent; border: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+.pr-remove:active { color: var(--danger); }
+.pr-add-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 12px; border-radius: 6px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  margin-bottom: 12px;
+}
+.pr-add-input:focus { border-color: var(--accent); }
 
 /* ── WEEK TABS ── */
 .week-tabs {
@@ -478,6 +470,24 @@ select option { background: #1a1d25; }
 .cell-charge-input:focus { border-color: var(--accent); background: rgba(194,85,98,0.10); }
 .cell-charge-input::placeholder { color: var(--muted); font-size: 11px; }
 .cell-load-auto { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); font-weight: 500; padding-top: 1px; }
+/* % : champ numérique — déduit de reps + RPE (normal) ou saisi à la main (verrouillé, en accent) */
+/* input.cell-inp : même spécificité que la règle globale input[type="number"], déclarée avant */
+input.cell-inp {
+  background: transparent; border: none; border-radius: 0; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 12px; padding: 0;
+  outline: none; width: 100%; -moz-appearance: textfield; appearance: textfield;
+}
+input.cell-inp::-webkit-outer-spin-button, input.cell-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.cell-inp::placeholder { color: var(--muted); }
+/* Repos : suggestion (grisé, italique) ou fixé par le coach (accent) */
+.cell-sel.sel-rest.rest-auto { color: var(--muted); font-style: italic; }
+.cell-sel.sel-rest[data-user-edited] { color: var(--accent); font-weight: 600; }
+input.inp-pct[data-user-edited] { color: var(--accent); font-weight: 600; }
+.pct-wrap { position: relative; display: flex; align-items: center; }
+/* « ~ » : valeur indicative (reps + RIR > 15) — éditeur seulement, jamais dans le PDF ni côté client */
+.pct-ind { display: none; position: absolute; left: 0; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 12px; pointer-events: none; }
+.pct-wrap[data-ind="1"] .pct-ind { display: block; }
+.pct-wrap[data-ind="1"] input.inp-pct { padding-left: 9px; }
 
 .ex-note-row { padding: 6px 10px; }
 .ex-note-input { background: transparent; border: none; color: var(--muted); font-size: 12px; width: 100%; outline: none; font-style: italic; }
@@ -679,6 +689,16 @@ select option { background: #1a1d25; }
         Ton programme est enregistré automatiquement sur cet appareil.
         Utilise l'export JSON pour le sauvegarder ailleurs ou le transférer.
       </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px">
+        Le % se déduit de tes reps et de ton RPE (table RTS). Un % saisi à la main reste verrouillé
+        jusqu'à ce que tu vides le champ.
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px">
+        Le repos est une <em>suggestion</em> déduite du % et du bloc — des usages courants, pas une
+        table de référence : à toi de l'ajuster (par pas de 15 s). Choisis une valeur (ou « Aucun »)
+        pour la fixer, « — » pour revenir à la suggestion.
+      </div>
+      <button onclick="recalcAllFromTables()" style="width:100%;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:9px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:9px">Recalculer les % et les repos</button>
       <button onclick="clearAutosave()" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">Effacer le programme enregistré</button>
     </div>
   </div>
@@ -687,7 +707,7 @@ select option { background: #1a1d25; }
 <!-- 1RM -->
 <div class="section">
   <div class="section-head" onclick="toggleSection(this)">
-    <span class="section-head-title">1RM — SBD & Haltérophilie</span><span class="arrow">▼</span>
+    <span class="section-head-title">1RM</span><span class="arrow">▼</span>
   </div>
   <div class="section-body" id="pr-body"></div>
 </div>
@@ -973,31 +993,6 @@ Object.entries(DB).forEach(([bloc, data]) => {
   if (data.subs) Object.values(data.subs).forEach(arr => arr.forEach(n => ALL_EX.push({name: n, bloc})));
 });
 
-// 1RM exercises (SBD + halte base names)
-const RM_EXERCISES = [
-  ...DB.sbd.exercises.map(e=>e.n),
-  ...DB.halte.exercises.map(e=>e.n)
-];
-
-const RM_DEFAULTS = {
-  'Squat (Squat arrière)': 170,
-  'Bench Press (Développé couché)': 135,
-  'Deadlift (Soulevé de terre)': 270,
-  'Squat Tempo': 175,
-  'Belt Squat (Squat ceinture)': 130,
-  'Front Squat (Squat avant)': 140,
-  'Bench 2ct': 130,
-  'Bench 3ct': 127.5,
-  'Bench Larsen': 115,
-  'Bench Close Grip (Développé prise serrée)': 110,
-  'Halt Deadlift (Soulevé de terre arrêt)': 220,
-  'Dead Tempo': 230,
-  'Snatch (Arraché)': 80,
-  'Clean & Jerk (Épaulé-jeté)': 100,
-  'Power Clean (Épaulé de force)': 90,
-  'Power Snatch (Arraché de force)': 70,
-};
-
 // ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
@@ -1108,116 +1103,173 @@ function init() {
 // ═══════════════════════════════════════════════════
 //  PR SECTION
 // ═══════════════════════════════════════════════════
-// ── Exercices SBD / haltérophilie réellement utilisés dans le programme ──
-function usedRMExercises() {
-  const used = new Set();
-  const scan = (weeks) => (weeks||[]).forEach(days =>
-    (days||[]).forEach(day =>
-      (day||[]).forEach(ex => {
-        if ((ex.bloc === 'sbd' || ex.bloc === 'halte') && (ex.exercise||'').trim()) {
-          used.add(ex.exercise.trim());
-        }
-      })));
-  // toutes les sections, pas seulement celle affichée
-  if (sections && sections.length) sections.forEach(sec => scan(sec.weeks));
-  else scan(weekData);
-  // + ce qui est saisi à l'écran mais pas encore enregistré
-  document.querySelectorAll('.ex-card').forEach(c => {
-    const b = c.dataset.bloc, n = (c.querySelector('.ex-name-input')||{}).value;
-    if ((b === 'sbd' || b === 'halte') && n && n.trim()) used.add(n.trim());
-  });
-  return used;
-}
+// Un 1RM peut désormais exister sur n'importe quel exercice, quel que soit
+// son bloc — la liste n'est plus figée à SBD/Haltérophilie : le coach
+// construit la sienne en cherchant dans sa bibliothèque (cf. plateforme,
+// même règle des deux côtés). La règle de déclenchement de la charge auto
+// devient « cet exercice a un 1RM », plus jamais « le bloc est SBD/Haltéro ».
 
 // Construit une ligne de saisie de 1RM
-function prRow(exName, bloc, currentValue) {
+function prRow(exName) {
   const parts = exName.split('(');
   const main  = parts[0].trim();
   const sub   = parts[1] ? parts[1].replace(')','').trim() : '';
   const val = prValue(exName);
   const row = document.createElement('div');
-  row.className = `pr-row ${bloc}`;
+  row.className = 'pr-row';
   row.innerHTML = `
-    <div class="pr-name">${main}${sub ? `<small>(${sub})</small>` : ''}</div>
-    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${exName.replace(/"/g,'&quot;')}" value="${val}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+    <div class="pr-name">${esc(main)}${sub ? `<small>(${esc(sub)})</small>` : ''}</div>
+    <input class="pr-input" type="number" id="pr-${eid(exName)}" data-ex="${esc(exName)}" value="${esc(val)}" placeholder="kg" inputmode="decimal" oninput="onPRChange(this)">`;
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'pr-remove';
+  removeBtn.title = 'Retirer de la liste';
+  removeBtn.textContent = '×';
+  removeBtn.onclick = () => removePR(exName);
+  row.appendChild(removeBtn);
   return row;
+}
+
+function removePR(exName) {
+  delete PR[exName];
+  renderPRSection();
+  scheduleAutosave();
+}
+
+function addPR(name) {
+  name = (name || '').trim();
+  if (!name) return;
+  const exists = Object.keys(PR).some(k => k.toLowerCase() === name.toLowerCase());
+  if (exists) { showToast('Déjà dans ta liste'); return; }
+  PR[name] = '';
+  renderPRSection();
+  const input = document.getElementById('pr-' + eid(name));
+  if (input) input.focus();
+}
+
+// Un exercice sélectionné dans un programme (autocomplétion, bibliothèque,
+// ajout perso) rejoint automatiquement la liste 1RM — silencieux, sans
+// écraser une valeur déjà saisie, sans doublon.
+function ensurePR(name) {
+  name = (name || '').trim();
+  if (!name) return;
+  const exists = Object.keys(PR).some(k => k.toLowerCase() === name.toLowerCase());
+  if (!exists) PR[name] = '';
 }
 
 function renderPRSection() {
   const body = document.getElementById('pr-body');
   if (!body) return;
-
   body.innerHTML = '';
-  const used = usedRMExercises();
 
-  // ── 1. Exercices du programme, en tête ──
-  if (used.size) {
-    const t = document.createElement('div');
-    t.className = 'pr-section-title used';
-    t.textContent = 'Dans ce programme';
-    body.appendChild(t);
-
+  const names = Object.keys(PR).sort((a,b) => a.localeCompare(b,'fr'));
+  if (names.length) {
     const table = document.createElement('div');
     table.className = 'pr-table';
-    ['sbd','halte'].forEach(bloc => {
-      DB[bloc].exercises.forEach(ex => {
-        if (used.has(ex.n)) table.appendChild(prRow(ex.n, bloc));
-      });
-    });
+    names.forEach(n => table.appendChild(prRow(n)));
     body.appendChild(table);
   } else {
     const hint = document.createElement('div');
     hint.className = 'pr-hint';
-    hint.textContent = 'Ajoute un exercice SBD ou haltérophilie à ton programme : son 1RM apparaîtra ici.';
+    hint.textContent = 'Aucun 1RM suivi pour l’instant — cherche un exercice ci-dessous pour l’ajouter à ta liste.';
     body.appendChild(hint);
   }
 
-  // ── 2. Le reste, replié ──
-  const toggle = document.createElement('button');
-  toggle.className = 'pr-toggle';
-  toggle.textContent = prAllOpen ? '− Masquer les autres exercices' : '+ Voir tous les exercices';
-  toggle.onclick = () => { prAllOpen = !prAllOpen; renderPRSection(); };
-  body.appendChild(toggle);
-
-  if (prAllOpen) {
-    ['sbd','halte'].forEach(bloc => {
-      const rest = DB[bloc].exercises.filter(ex => !used.has(ex.n));
-      if (!rest.length) return;
-      const t = document.createElement('div');
-      t.className = `pr-section-title ${bloc}`;
-      t.textContent = DB[bloc].label;
-      body.appendChild(t);
-      const table = document.createElement('div');
-      table.className = 'pr-table';
-      rest.forEach(ex => table.appendChild(prRow(ex.n, bloc)));
-      body.appendChild(table);
-    });
-  }
+  body.appendChild(buildPRAddControl());
 }
 
-let prAllOpen = false;
+// Recherche + ajout — même principe que l'autocomplétion des cartes
+// (acRender) mais dédiée : exclut ce qui est déjà dans la liste, ajoute
+// au lieu de remplir un champ.
+function buildPRAddControl() {
+  const wrap = document.createElement('div');
+  wrap.style.position = 'relative';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Ajouter un exercice…';
+  input.autocomplete = 'off';
+  input.className = 'pr-add-input';
+
+  const list = document.createElement('div');
+  list.className = 'ac-list';
+
+  const renderList = () => {
+    const q = input.value.trim().toLowerCase();
+    list.innerHTML = '';
+    if (!q) { list.classList.remove('open'); return; }
+    const known = new Set(Object.keys(PR).map(k => k.toLowerCase()));
+    const matches = ALL_EX.filter(e => e.name.toLowerCase().includes(q) && !known.has(e.name.toLowerCase()));
+    const deb = matches.filter(e => e.name.toLowerCase().startsWith(q));
+    const mid = matches.filter(e => !e.name.toLowerCase().startsWith(q));
+    deb.concat(mid).slice(0, 40).forEach(e => {
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      const dot = document.createElement('span');
+      dot.className = 'ac-dot browser-ex-dot' + (isBuiltinBloc(e.bloc) ? ` ${e.bloc}` : '');
+      if (!isBuiltinBloc(e.bloc)) dot.setAttribute('data-custom-bloc', '');
+      item.appendChild(dot);
+      item.appendChild(document.createTextNode(e.name));
+      item.onmousedown = ev => ev.preventDefault();
+      item.onclick = () => { addPR(e.name); input.value = ''; list.classList.remove('open'); };
+      list.appendChild(item);
+    });
+    const exact = known.has(q) || ALL_EX.some(e => e.name.toLowerCase() === q);
+    if (!exact) {
+      const add = document.createElement('div');
+      add.className = 'ac-item ac-add';
+      const tag = document.createElement('span');
+      tag.className = 'ac-new';
+      tag.textContent = '+ AJOUTER';
+      add.appendChild(tag);
+      add.appendChild(document.createTextNode(' « ' + input.value.trim() + ' »'));
+      add.onmousedown = ev => ev.preventDefault();
+      add.onclick = () => { addPR(input.value.trim()); input.value = ''; list.classList.remove('open'); };
+      list.appendChild(add);
+    }
+    list.classList.add('open');
+  };
+
+  input.oninput = renderList;
+  input.onfocus = renderList;
+  input.onblur = () => setTimeout(() => list.classList.remove('open'), 180);
+
+  wrap.appendChild(input);
+  wrap.appendChild(list);
+  return wrap;
+}
 
 // Reconstruit la liste sans gêner une saisie en cours
 function refreshPRSection() {
   const a = document.activeElement;
-  if (a && a.classList && a.classList.contains('pr-input')) return;  // saisie en cours
+  if (a && a.classList && (a.classList.contains('pr-input') || a.classList.contains('pr-add-input'))) return;
   renderPRSection();
 }
 
-// Un 1RM modifié → recalcule toutes les charges auto non saisies manuellement
+// Un 1RM modifié (valeur, ajout ou retrait) peut faire basculer une charge
+// entre auto et manuelle : on reconstruit la cellule Charge de chaque
+// carte, pas seulement la valeur des cellules déjà auto.
 function onPRChange(input) {
   if (input && input.dataset.ex) setPR(input.dataset.ex, input.value);
-  document.querySelectorAll('.ex-card').forEach(c => refreshLoad(c));
+  document.querySelectorAll('.ex-card').forEach(c => updateCardBloc(c, c.dataset.bloc));
 }
 
 function eid(s){ return s.replace(/[^a-zA-Z0-9]/g,'_'); }
 
+// Échappe une chaîne avant insertion dans du HTML (texte ou attribut entre guillemets).
+// Les noms d'exercice, de jour, de section, de bloc et les commentaires sont librement
+// saisis (ou importés depuis un JSON) : sans ça, un « " » casse un champ et un
+// « <img onerror> » s'exécute.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // Registre des 1RM : source de vérité, indépendante de l'affichage.
-// Un exercice masqué conserve donc sa valeur.
 let PR = {};
 function prValue(name) {
-  if (name in PR) return PR[name];
-  return (RM_DEFAULTS[name] !== undefined) ? String(RM_DEFAULTS[name]) : '';
+  return (name in PR) ? PR[name] : '';
 }
 function setPR(name, v) { PR[name] = v; }
 function getPR(name){
@@ -1350,6 +1402,7 @@ function switchWeek(i){
   activeWeek = i;
   if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
   renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1360,8 +1413,8 @@ let ctxTimer = null, ctxMoved = false;
 function openCtx(x, y, title, items) {
   const menu = document.getElementById('ctx-menu');
   const back = document.getElementById('ctx-backdrop');
-  menu.innerHTML = `<div class="ctx-head">${title}</div>`
-    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${it.label}</button>`).join('');
+  menu.innerHTML = `<div class="ctx-head">${esc(title)}</div>`
+    + items.map((it,i) => `<button class="ctx-item${it.danger?' danger':''}" ${it.disabled?'disabled':''} data-i="${i}">${esc(it.label)}</button>`).join('');
   menu.querySelectorAll('.ctx-item').forEach(btn => {
     btn.onclick = () => {
       const it = items[+btn.dataset.i];
@@ -1418,8 +1471,8 @@ function renderSecTabs() {
   let html = '';
   sections.forEach((_, i) => {
     const act = i === activeSection;
-    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${sectionLabel(i)}">`
-          + `<span class="sec-label">${sectionLabel(i)}</span>`
+    html += `<button class="sec-tab${act?' active':''}" data-i="${i}" onclick="switchSection(${i})" title="${esc(sectionLabel(i))}">`
+          + `<span class="sec-label">${esc(sectionLabel(i))}</span>`
           + (act ? `<span class="sec-menu">⋯</span>` : '')
           + `</button>`;
   });
@@ -1532,7 +1585,7 @@ function renderDayTabs() {
   for (let d = 0; d < nD; d++) {
     const dn = getDayName(activeWeek, d);
     const label = dn ? `DAY ${d+1} · ${dn}` : `DAY ${d+1}`;
-    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${label}">${label}</button>`;
+    html += `<button class="day-tab${d===activeDay?' active':''}" data-i="${d}" onclick="switchDay(${d})" title="${esc(label)}">${esc(label)}</button>`;
   }
   html += `<button class="day-add" onclick="openDayModal()" title="Ajouter un jour">+</button>`;
   el.innerHTML = html;
@@ -1553,6 +1606,7 @@ function switchDay(d) {
   saveState();
   activeDay = d;
   renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 function openWeekModal() {
@@ -1609,8 +1663,10 @@ function saveState() {
         sets:  sr.querySelector('.sel-sets').value,
         reps:  sr.querySelector('.sel-reps').value,
         rpe:   sr.querySelector('.sel-rpe').value,
-        pct:   sr.querySelector('.sel-pct').value,
-        rest:  sr.querySelector('.sel-rest') ? sr.querySelector('.sel-rest').value : '',
+        pct:   sr.querySelector('.inp-pct').value,
+        pctUserEdited: !!sr.querySelector('.inp-pct').dataset.userEdited,
+        rest:  (v => v === 'none' ? '' : v)(sr.querySelector('.sel-rest') ? sr.querySelector('.sel-rest').value : ''),
+        restUserEdited: sr.querySelector('.sel-rest') ? !!sr.querySelector('.sel-rest').dataset.userEdited : false,
         charge: sr.querySelector('.cell-charge-input') ? sr.querySelector('.cell-charge-input').value : '',
         unit:   sr.querySelector('.unit-select') ? sr.querySelector('.unit-select').value : 'kg',
         chargeUserEdited: sr.querySelector('.load-auto') ? !!sr.querySelector('.load-auto').dataset.userEdited : false,
@@ -1623,7 +1679,9 @@ function saveState() {
         reps:     subRows[0]?.reps || '',
         rpe:      subRows[0]?.rpe  || '',
         pct:      subRows[0]?.pct  || '',
+        pctUserEdited: subRows[0]?.pctUserEdited || false,
         rest:     subRows[0]?.rest || '',
+        restUserEdited: subRows[0]?.restUserEdited || false,
         charge:   subRows[0]?.charge || '',
         unit:     subRows[0]?.unit || 'kg',
         chargeUserEdited: subRows[0]?.chargeUserEdited || false,
@@ -1726,18 +1784,18 @@ function appendExCard(dayIdx, ex) {
   card.dataset.bloc = bloc;
   card.dataset.eid  = ex.eid || newEid();
 
-  const isAutoLoad = (bloc === 'sbd' || bloc === 'halte');
+  const isAutoLoad = getPR(ex.exercise) > 0;
   const load = isAutoLoad ? computeAutoLoad(ex) : '';
   const dlId = `dl-${dayIdx}-${Math.random().toString(36).slice(2,8)}`;
 
   // Build first sub-row (main row)
-  const subRows = ex.subRows && ex.subRows.length > 0 ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,rest:ex.rest,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
+  const subRows = ex.subRows && ex.subRows.length > 0 ? ex.subRows : [{sets:ex.sets,reps:ex.reps,rpe:ex.rpe,pct:ex.pct,pctUserEdited:ex.pctUserEdited,rest:ex.rest,restUserEdited:ex.restUserEdited,charge:ex.charge,chargeUserEdited:ex.chargeUserEdited}];
 
   card.innerHTML = `
     <div class="ex-top">
       <div class="bloc-dot bloc-${bloc}" onclick="openBlocModal(this.closest('.ex-card'))"></div>
       <div class="ex-name-wrap">
-        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${ex.exercise||''}"
+        <input class="ex-name-input" type="text" placeholder="Exercice…" value="${esc(ex.exercise)}"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
           oninput="onExNameInput(this)" onfocus="acOpen(this)" onblur="acBlur(this)">
         <div class="ac-list"></div>
@@ -1752,11 +1810,11 @@ function appendExCard(dayIdx, ex) {
     <div class="sub-rows" id="subrows-${dlId}"></div>
     <div class="ex-line">
       <span class="ex-line-tag coach">Coach</span>
-      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${ex.note||''}">
+      <input class="ex-note-input" type="text" placeholder="Consigne, conseil technique…" value="${esc(ex.note)}">
     </div>
     <div class="ex-line">
       <span class="ex-line-tag client">Client</span>
-      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${ex.conseil||''}" readonly>
+      <input class="ex-conseil-input" type="text" placeholder="Retour du client — rempli en séance" value="${esc(ex.conseil)}" readonly>
     </div>`;
 
   list.appendChild(card);
@@ -1777,8 +1835,11 @@ function addEx(dayIdx) {
 }
 
 // Construction unique de la cellule Charge (utilisée partout)
-function chargeCellHTML(bloc, sr, valueOverride) {
-  const isAuto = bloc==='sbd' || bloc==='halte';
+// `exName` : nom de l'exercice — la charge est automatique dès qu'il a un
+// 1RM renseigné, quel que soit son bloc (`bloc` ne sert plus qu'à choisir
+// les unités disponibles, cf. unitOpts).
+function chargeCellHTML(bloc, sr, valueOverride, exName) {
+  const isAuto = getPR(exName) > 0;
   const val    = valueOverride != null ? valueOverride : ((sr && sr.charge) || '');
   const edited = (sr && sr.chargeUserEdited) ? 'data-user-edited="1"' : '';
   // L'unité reste masquée tant qu'aucune charge n'est saisie
@@ -1786,7 +1847,7 @@ function chargeCellHTML(bloc, sr, valueOverride) {
   return `<span class="cell-lbl">Charge</span>
     <div style="display:flex;align-items:center;gap:2px">
       <input class="cell-charge-input${isAuto?' load-auto':''}" type="text" inputmode="decimal"
-             placeholder="—" value="${val}" ${edited} style="flex:1;min-width:0"
+             placeholder="—" value="${esc(val)}" ${edited} style="flex:1;min-width:0"
              oninput="onChargeInput(this)${isAuto?';onChargeManualEdit(this)':''}">
       <select class="unit-select"${hidden} data-w="28">${unitOpts(bloc, (sr && sr.unit) || 'kg')}</select>
     </div>`;
@@ -1805,23 +1866,32 @@ function onChargeInput(input) {
   scheduleAutosave();
 }
 
-function appendSubRow(container, sr, bloc, isAutoLoad) {
-  const div = document.createElement('div');
-  div.className = 'sub-row';
-  div.dataset.sid = sr.sid || newSid();
-  const load = isAutoLoad && sr.pct ? computeAutoLoad({exercise: container.closest('.ex-card').querySelector('.ex-name-input').value, pct: sr.pct, bloc}) : '';
-  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load ? load.replace(' kg','') : (sr.charge||''));
-  div.innerHTML = `
+// Contenu d'une ligne de série — commun à la construction d'une carte et à
+// l'ajout d'une ligne. Le % est résolu ici (table ou verrou), puis la charge.
+function subRowHTML(sr, bloc, exName) {
+  const p = resolvePct(sr);
+  const rr = resolveRest(sr, bloc, p.value);
+  const load = getPR(exName) > 0 && p.value ? computeAutoLoad({exercise: exName, pct: p.value, bloc}) : '';
+  const chargeVal = sr.chargeUserEdited && sr.charge ? sr.charge : (load && load !== '—' ? load.replace(' kg','') : (sr.charge||''));
+  return `
     <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,sr.sets)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,sr.reps)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,sr.rpe)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts(sr.pct)}</select></div>
-    <div class="sub-cell">${chargeCellHTML(bloc, sr, chargeVal)}</div>
-    <div class="sub-cell"><span class="cell-lbl">Repos</span><select class="cell-sel sel-rest">${restOpts(sr.rest)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps" onchange="onRowChange(this)">${opts(1,30,sr.reps)}</select></div>
+    <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe" onchange="onRowChange(this)">${rpeOpts(sr.rpe)}</select></div>
+    <div class="sub-cell">${pctCellHTML(p)}</div>
+    <div class="sub-cell">${chargeCellHTML(bloc, sr, chargeVal, exName)}</div>
+    <div class="sub-cell"><span class="cell-lbl">Repos</span><select class="cell-sel sel-rest${rr.suggested ? ' rest-auto' : ''}"${rr.manual ? ' data-user-edited="1"' : ''} title="${restTitle(rr.manual, rr.suggested)}" onchange="onRestChange(this)">${restOpts(rr.value)}</select></div>
     <div class="sub-cell">
       <button class="btn-add-subrow" onclick="addSubRow(this)" title="Ajouter série">＋</button>
       <button class="btn-del-subrow" onclick="delSubRow(this)" title="Supprimer">−</button>
     </div>`;
+}
+
+function appendSubRow(container, sr, bloc, isAutoLoad) {
+  const div = document.createElement('div');
+  div.className = 'sub-row';
+  div.dataset.sid = sr.sid || newSid();
+  const exName = container.closest('.ex-card').querySelector('.ex-name-input').value;
+  div.innerHTML = subRowHTML(sr, bloc, exName);
   container.appendChild(div);
 }
 
@@ -1830,22 +1900,12 @@ function addSubRow(btn) {
   const container = row.closest('.sub-rows');
   const card = container.closest('.ex-card');
   const bloc = card.dataset.bloc;
-  const isAutoLoad = bloc==='sbd'||bloc==='halte';
+  const exName = card.querySelector('.ex-name-input').value;
   const newRow = {sets:'3',reps:'5',rpe:'7',pct:'',rest:'',charge:''};
   const div = document.createElement('div');
   div.className = 'sub-row';
   div.dataset.sid = newSid();
-  div.innerHTML = `
-    <div class="sub-cell"><span class="cell-lbl">Sets</span><select class="cell-sel sel-sets">${opts(1,20,newRow.sets)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">Reps</span><select class="cell-sel sel-reps">${opts(1,30,newRow.reps)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">RPE</span><select class="cell-sel sel-rpe">${opts(3,10,newRow.rpe)}</select></div>
-    <div class="sub-cell"><span class="cell-lbl">%</span><select class="cell-sel sel-pct" onchange="refreshSubLoad(this)">${pctOpts('')}</select></div>
-    <div class="sub-cell">${chargeCellHTML(bloc, newRow, '')}</div>
-    <div class="sub-cell"><span class="cell-lbl">Repos</span><select class="cell-sel sel-rest">${restOpts('')}</select></div>
-    <div class="sub-cell">
-      <button class="btn-add-subrow" onclick="addSubRow(this)">＋</button>
-      <button class="btn-del-subrow" onclick="delSubRow(this)">−</button>
-    </div>`;
+  div.innerHTML = subRowHTML(newRow, bloc, exName);
   row.insertAdjacentElement('afterend', div);
 }
 
@@ -1855,18 +1915,67 @@ function delSubRow(btn) {
   btn.closest('.sub-row').remove();
 }
 
-function refreshSubLoad(sel) {
-  const row = sel.closest('.sub-row');
+// Recalcule une ligne dans l'ordre : % (sauf verrou) puis charge (sauf verrou).
+// Un % qui devient vide (hors table) vide aussi la charge automatique — sans
+// quoi elle resterait périmée.
+function refreshRow(row) {
+  refreshRowPct(row);
+  refreshRowRest(row);
   const card = row.closest('.ex-card');
   const input = row.querySelector('.load-auto');
   if (!input || input.dataset.userEdited) return;
   const val = computeAutoLoad({
     exercise: card.querySelector('.ex-name-input').value,
-    pct: sel.value,
+    pct: row.querySelector('.inp-pct').value,
     bloc: card.dataset.bloc
   });
-  if (val && val !== '—') input.value = val.replace(' kg','');
+  input.value = (val && val !== '—') ? val.replace(' kg','') : '';
   toggleUnit(input);
+}
+
+// Reps ou RPE modifiés
+function onRowChange(el) { refreshRow(el.closest('.sub-row')); }
+
+// Repos : suggestion depuis le % et le bloc, sauf s'il est fixé par le coach
+function styleRest(sel) {
+  const manual = !!sel.dataset.userEdited;
+  const suggested = !manual && sel.value !== '';
+  sel.classList.toggle('rest-auto', suggested);
+  sel.title = restTitle(manual, suggested);
+}
+function refreshRowRest(row) {
+  const sel = row.querySelector('.sel-rest');
+  if (!sel) return;
+  if (!sel.dataset.userEdited) {
+    const card = row.closest('.ex-card');
+    const s = restFromPct(numOrNull(row.querySelector('.inp-pct').value), card.dataset.bloc);
+    sel.value = s || '';
+  }
+  styleRest(sel);
+}
+// Choix d'une valeur (ou « Aucun ») : fixé. « — » : le verrou saute, la suggestion revient.
+function onRestChange(sel) {
+  if (sel.value === '') delete sel.dataset.userEdited;
+  else sel.dataset.userEdited = '1';
+  refreshRowRest(sel.closest('.sub-row'));
+}
+
+// Saisie du % à la main : verrouille ; champ vidé : verrou levé (la table
+// reprend la main à la validation du champ, pour ne pas réécrire pendant la frappe).
+function onPctInput(inp) {
+  if (inp.value.trim() === '') delete inp.dataset.userEdited;
+  else inp.dataset.userEdited = '1';
+  const wrap = inp.closest('.pct-wrap');
+  if (wrap && inp.dataset.userEdited) wrap.removeAttribute('data-ind');
+  if (inp.dataset.userEdited) refreshRow(inp.closest('.sub-row'));
+}
+function onPctCommit(inp) {
+  if (inp.value.trim() !== '') {
+    const n = parseFloat(inp.value);
+    inp.value = isFinite(n) ? String(Math.round(n)) : '';
+    if (inp.value === '') delete inp.dataset.userEdited;
+  }
+  refreshRow(inp.closest('.sub-row'));
 }
 
 function removeExCard(btn) {
@@ -1942,6 +2051,198 @@ function computeAutoLoad(ex) {
   return (Math.round(pr * parseFloat(ex.pct) / 100 * 2) / 2) + ' kg';
 }
 
+// ═══════════════════════════════════════════════════
+//  % DÉDUIT DE REPS + RPE  (table RTS, pas de 0,5 RPE)
+// ═══════════════════════════════════════════════════
+// Copie de lib/rpe-table.ts (plateforme) — à garder identique. Millièmes du
+// 1RM indexés par n = reps + (10 − RPE) ; l'index 0 est inutilisé. Un RPE non
+// entier est interpolé linéairement (le demi-RPE du tableau source est la
+// moyenne exacte des deux cases voisines).
+const RPE_CURVE = [
+  0, 1000, 955, 922, 892, 863, 837, 811, 786, 762, 739, 707, 680, 653, 626,
+  599, 572, 545, 518, 491, 464, 437, 410, 383, 356, 329
+];
+// → { pct: entier, indicative: n > 15 } ou null hors table (reps entier 1–15, RPE 0–10)
+function pctFromRpe(reps, rpe) {
+  if (reps == null || rpe == null) return null;
+  if (!Number.isInteger(reps) || reps < 1 || reps > 15) return null;
+  if (!isFinite(rpe) || rpe < 0 || rpe > 10) return null;
+  const n = reps + 10 - rpe;
+  const lo = Math.floor(n), hi = Math.ceil(n);
+  const milli = lo === hi ? RPE_CURVE[lo] : RPE_CURVE[lo] + (RPE_CURVE[hi] - RPE_CURVE[lo]) * (n - lo);
+  return { pct: Math.round(milli / 10), indicative: n > 15 };
+}
+function numOrNull(v) {
+  const s = String(v == null ? '' : v).trim().replace(',', '.');
+  if (s === '') return null;
+  const n = Number(s);
+  return isFinite(n) ? n : null;
+}
+// ═══════════════════════════════════════════════════
+//  REPOS SUGGÉRÉ  (déduit du % et du bloc)
+// ═══════════════════════════════════════════════════
+// Copie de lib/rest-suggestion.ts (plateforme) — à garder identique.
+// ATTENTION : usages courants, PAS une table de référence faisant autorité —
+// une suggestion, jamais une prescription. Le coach garde la main.
+// Progression continue (linéaire par morceaux) entre des repères [% du 1RM,
+// secondes], constante en deçà de 50 % et au-delà de 100 %, arrondie au
+// plus proche du menu (égalité : la valeur la plus longue).
+const REST_KNOTS_HAUT = [[50, 60], [60, 90], [70, 135], [85, 240], [95, 345], [100, 360]]; // SBD, haltérophilie
+const REST_KNOTS_BAS  = [[50, 45], [60, 60], [70, 105], [85, 180], [95, 270], [100, 300]]; // musculation, cardio, Hyrox, blocs perso
+const REST_MENU = (() => {
+  const out = [];
+  for (let s = 15; s <= 300; s += 15) {
+    const m = Math.floor(s / 60), r = s % 60;
+    out.push({ label: m === 0 ? s + 's' : (r === 0 ? m + ':00' : m + ':' + String(r).padStart(2, '0')), seconds: s });
+  }
+  [['6:00', 360], ['7:00', 420], ['8:00', 480], ['10:00', 600]].forEach(([label, seconds]) => out.push({ label, seconds }));
+  return out;
+})();
+function restNearestLabel(seconds) {
+  let best = REST_MENU[0];
+  for (const m of REST_MENU) {
+    const d = Math.abs(m.seconds - seconds), bd = Math.abs(best.seconds - seconds);
+    if (d < bd || (d === bd && m.seconds > best.seconds)) best = m;
+  }
+  return best.label;
+}
+function restInterpolate(knots, pct) {
+  if (pct <= knots[0][0]) return knots[0][1];
+  const last = knots[knots.length - 1];
+  if (pct >= last[0]) return last[1];
+  for (let i = 1; i < knots.length; i++) {
+    if (pct <= knots[i][0]) {
+      const [p0, s0] = knots[i - 1], [p1, s1] = knots[i];
+      return s0 + ((s1 - s0) * (pct - p0)) / (p1 - p0);
+    }
+  }
+  return last[1];
+}
+// → libellé du menu ("2:15") ou null (pas de % exploitable, ou étirements)
+function restFromPct(pct, bloc) {
+  if (pct == null || !isFinite(pct) || pct <= 0) return null;
+  if (bloc === 'etire') return null;
+  const knots = (bloc === 'sbd' || bloc === 'halte') ? REST_KNOTS_HAUT : REST_KNOTS_BAS;
+  return restNearestLabel(restInterpolate(knots, pct));
+}
+const REST_LABELS = new Set(REST_MENU.map(m => m.label));
+// Repos d'une ligne : verrouillé si le coach l'a fixé (y compris « Aucun » =
+// repos vide verrouillé), sinon suggéré depuis le % et le bloc. Un fichier
+// ancien (sans drapeau restUserEdited) qui porte un repos du menu le garde
+// verrouillé. → { value ('' | 'none' | libellé), manual, suggested }
+function resolveRest(sr, bloc, pct) {
+  const typedRaw = String(sr.rest == null ? '' : sr.rest).trim();
+  const typed = REST_LABELS.has(typedRaw) ? typedRaw : '';
+  if (sr.restUserEdited === true) return { value: typed === '' ? 'none' : typed, manual: true, suggested: false };
+  if (sr.restUserEdited === undefined && typed !== '') return { value: typed, manual: true, suggested: false };
+  const s = restFromPct(numOrNull(pct), bloc);
+  return { value: s || '', manual: false, suggested: !!s };
+}
+function restTitle(manual, suggested) {
+  if (suggested) return 'Suggestion — usages courants, pas une table de référence. Choisis une valeur pour la fixer, « — » pour recalculer.';
+  if (manual) return 'Fixé par toi — « — » pour revenir à la suggestion.';
+  return '';
+}
+
+// % d'une ligne : verrouillé s'il est saisi à la main, sinon déduit de la table.
+// Un fichier ancien (sans drapeau pctUserEdited) qui porte un % le garde
+// verrouillé — on ne change jamais en silence une charge prescrite.
+function resolvePct(sr) {
+  const typed = String(sr.pct == null ? '' : sr.pct).trim();
+  if (typed !== '' && sr.pctUserEdited !== false) return { value: typed, manual: true, indicative: false };
+  const res = pctFromRpe(numOrNull(sr.reps), numOrNull(sr.rpe));
+  return { value: res ? String(res.pct) : '', manual: false, indicative: !!(res && res.indicative) };
+}
+function pctCellHTML(p) {
+  return `<span class="cell-lbl">%</span>
+    <div class="pct-wrap"${p.indicative ? ' data-ind="1"' : ''}>
+      <span class="pct-ind" title="Valeur indicative (reps + RIR > 15) — à prendre avec recul">~</span>
+      <input class="cell-inp inp-pct" type="number" inputmode="numeric" step="1" min="0" placeholder="—"
+             value="${p.value}"${p.manual ? ' data-user-edited="1"' : ''}
+             title="Déduit de reps + RPE — saisis une valeur pour la verrouiller, vide le champ pour le recalculer"
+             oninput="onPctInput(this)" onchange="onPctCommit(this)">
+    </div>`;
+}
+// Recalcule le champ % d'une ligne depuis ses reps/RPE (sans toucher à un % verrouillé)
+function refreshRowPct(row) {
+  const inp = row.querySelector('.inp-pct');
+  const wrap = inp.closest('.pct-wrap');
+  if (inp.dataset.userEdited) { wrap.removeAttribute('data-ind'); return; }
+  const res = pctFromRpe(numOrNull(row.querySelector('.sel-reps').value), numOrNull(row.querySelector('.sel-rpe').value));
+  inp.value = res ? String(res.pct) : '';
+  if (res && res.indicative) wrap.setAttribute('data-ind', '1'); else wrap.removeAttribute('data-ind');
+}
+// RPE de 3 à 10 par pas de 0,5 (affiché avec la virgule, valeur avec le point)
+function rpeOpts(sel) {
+  const cur = String(sel == null ? '' : sel).replace(',', '.');
+  let o = '<option value="">—</option>';
+  for (let v = 3; v <= 10; v += 0.5) {
+    const val = String(v);
+    o += `<option value="${val}"${cur === val ? ' selected' : ''}>${val.replace('.', ',')}</option>`;
+  }
+  return o;
+}
+// Bouton « Recalculer les % depuis la table » : tout le programme (toutes
+// sections), y compris les % saisis à la main — d'où la confirmation chiffrée.
+// Un seul passage : le % d'abord (table RPE), puis le repos suggéré depuis ce %
+// (ou depuis le % saisi à la main quand la série est hors table).
+function recalcAllFromTables() {
+  if (!hasProgram()) { showToast('Aucun programme'); return; }
+  collectAll();
+  const jobs = [];
+  const pc = { inTable: 0, outTable: 0, changed: 0, manualReplaced: 0 };
+  const rs = { withSuggestion: 0, none: 0, changed: 0, manualReplaced: 0 };
+  sections.forEach(sec => (sec.weeks || []).forEach(week => (week || []).forEach(day => (day || []).forEach(ex => {
+    (ex.subRows || []).forEach(sr => {
+      // ── % ──
+      const typedPct = String(sr.pct == null ? '' : sr.pct).trim();
+      const res = pctFromRpe(numOrNull(sr.reps), numOrNull(sr.rpe));
+      let newPct = null;
+      if (!res) pc.outTable++;
+      else {
+        pc.inTable++;
+        newPct = String(res.pct);
+        const wasManual = typedPct !== '' && sr.pctUserEdited !== false;
+        if (typedPct !== newPct) { pc.changed++; if (wasManual) pc.manualReplaced++; }
+      }
+      // ── repos ── (base : le nouveau % ; hors table, le % actuel)
+      const pctForRest = newPct != null ? newPct : typedPct;
+      const sug = restFromPct(numOrNull(pctForRest), ex.bloc);
+      const typedRest = REST_LABELS.has(String(sr.rest || '').trim()) ? String(sr.rest).trim() : '';
+      if (sug == null) rs.none++;
+      else {
+        rs.withSuggestion++;
+        const wasManual = sr.restUserEdited === true || (sr.restUserEdited === undefined && typedRest !== '');
+        if (typedRest !== sug) { rs.changed++; if (wasManual) rs.manualReplaced++; }
+      }
+      const pctJob = newPct != null && (typedPct !== newPct || sr.pctUserEdited !== false);
+      const restJob = sug != null && (typedRest !== sug || sr.restUserEdited !== false);
+      if (pctJob || restJob) jobs.push({ ex, sr, newPct: pctJob ? newPct : null, sug: restJob ? sug : null });
+    });
+  }))));
+  if (!pc.inTable && !rs.withSuggestion) { showToast('Rien à recalculer'); return; }
+  if (!pc.changed && !rs.changed && !jobs.length) { showToast('Rien à recalculer'); return; }
+  const msg = `% — ${pc.inTable} série(s) ont reps + RPE dans la table : ${pc.changed} changent, dont ${pc.manualReplaced} saisi(s) à la main (remplacés). ${pc.outTable} hors table ne bougent pas.\n\n`
+    + `Repos (suggestion : usages courants, pas une table de référence) — ${rs.withSuggestion} série(s) ont une suggestion : ${rs.changed} changent, dont ${rs.manualReplaced} fixé(s) à la main, « Aucun » compris (remplacés). ${rs.none} sans suggestion ne bougent pas.\n\nRecalculer ?`;
+  if (!confirm(msg)) return;
+  jobs.forEach(({ ex, sr, newPct, sug }) => {
+    if (newPct != null) { sr.pct = newPct; sr.pctUserEdited = false; }
+    if (sug != null) { sr.rest = sug; sr.restUserEdited = false; }
+    if (newPct != null && !sr.chargeUserEdited && getPR(ex.exercise) > 0) {
+      const l = computeAutoLoad({ exercise: ex.exercise, pct: sr.pct });
+      if (l && l !== '—') sr.charge = l.replace(' kg', '');
+    }
+    if (ex.subRows[0] === sr) {
+      ex.pct = sr.pct; ex.pctUserEdited = sr.pctUserEdited;
+      ex.rest = sr.rest; ex.restUserEdited = sr.restUserEdited;
+      if (newPct != null && !sr.chargeUserEdited) ex.charge = sr.charge;
+    }
+  });
+  renderDays();
+  doAutosave();
+  showToast(`✓ ${pc.changed} % et ${rs.changed} repos recalculé(s)`);
+}
+
 function refreshLoad(card) {
   // Refresh all sub-row auto loads when exercise name changes
   card.querySelectorAll('.sub-row').forEach(row => {
@@ -1949,7 +2250,7 @@ function refreshLoad(card) {
     if (!input || input.dataset.userEdited) return;
     const val = computeAutoLoad({
       exercise: card.querySelector('.ex-name-input').value,
-      pct: row.querySelector('.sel-pct').value,
+      pct: row.querySelector('.inp-pct').value,
       bloc: card.dataset.bloc
     });
     if (val && val !== '—') input.value = val.replace(' kg','');
@@ -1995,14 +2296,14 @@ function acRender(input) {
 
   let html = res.map(e => {
     const col = DB[e.bloc] ? DB[e.bloc].color : 'muscu';
-    return `<div class="ac-item" data-n="${e.name.replace(/"/g,'&quot;')}" data-b="${e.bloc}">`
-         + `<span class="ac-dot browser-ex-dot ${col}"></span>${e.name}</div>`;
+    return `<div class="ac-item" data-n="${esc(e.name)}" data-b="${esc(e.bloc)}">`
+         + `<span class="ac-dot browser-ex-dot ${col}"></span>${esc(e.name)}</div>`;
   }).join('');
 
   // Proposition d'ajout si la saisie ne correspond à aucun exercice connu
   const exact = q && ALL_EX.some(e => e.name.toLowerCase() === q);
   if (q && !exact) {
-    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${input.value.trim()} » à la bibliothèque</div>`;
+    html += `<div class="ac-item ac-add"><span class="ac-new">+ AJOUTER</span>&nbsp;« ${esc(input.value.trim())} » à la bibliothèque</div>`;
   }
 
   if (!html) { list.classList.remove('open'); return; }
@@ -2022,6 +2323,7 @@ function acRender(input) {
       updateCardBloc(card, it.dataset.b);
       refreshLoad(card);
       list.classList.remove('open');
+      ensurePR(it.dataset.n);
       refreshPRSection();
       scheduleAutosave();
     };
@@ -2375,12 +2677,12 @@ function libDestinationOptions(currentBloc, currentSub) {
   Object.entries(DB).forEach(([b, data]) => {
     if (data.exercises) {
       const sel = (b === currentBloc && !currentSub) ? ' selected' : '';
-      opts += `<option value="${b}|"${sel}>${data.label}</option>`;
+      opts += `<option value="${esc(b)}|"${sel}>${esc(data.label)}</option>`;
     }
     if (data.subs) {
       Object.keys(data.subs).sort((a,c) => a.localeCompare(c,'fr')).forEach(sub => {
         const sel = (b === currentBloc && sub === currentSub) ? ' selected' : '';
-        opts += `<option value="${b}|${sub}"${sel}>${data.label} — ${sub}</option>`;
+        opts += `<option value="${esc(b)}|${esc(sub)}"${sel}>${esc(data.label)} — ${esc(sub)}</option>`;
       });
     }
   });
@@ -2651,11 +2953,11 @@ function openAddExModal(name, card) {
   Object.entries(DB).forEach(([b, data]) => {
     // Bloc plat (SBD, Haltéro, Cardio, Hyrox) : option « sans catégorie »
     if (data.exercises) {
-      opts += `<option value="${b}|">${data.label}</option>`;
+      opts += `<option value="${esc(b)}|">${esc(data.label)}</option>`;
     }
     if (data.subs) {
       Object.keys(data.subs).sort((a,b2) => a.localeCompare(b2,'fr')).forEach(sub => {
-        opts += `<option value="${b}|${sub}">${data.label} — ${sub}</option>`;
+        opts += `<option value="${esc(b)}|${esc(sub)}">${esc(data.label)} — ${esc(sub)}</option>`;
       });
     }
   });
@@ -2698,6 +3000,8 @@ function confirmAddEx() {
     if (input) input.value = pendingAddName;
     updateCardBloc(pendingAddCard, bloc);
     refreshLoad(pendingAddCard);
+    ensurePR(pendingAddName);
+    refreshPRSection();
   }
   buildBrowserFull();
   renderLibSection();
@@ -2731,13 +3035,12 @@ function onExNameInput(input) {
   clearTimeout(window._prT);
   window._prT = setTimeout(refreshPRSection, 400);
   const card = input.closest('.ex-card');
-  // auto-detect bloc from DB
+  // auto-detect bloc from DB (affiche toujours) ; reconstruit la cellule
+  // Charge dans tous les cas, le 1RM dépendant du nom, pas du bloc.
   const val = input.value.trim();
   const found = ALL_EX.find(e => e.name.toLowerCase() === val.toLowerCase());
-  if (found && found.bloc !== card.dataset.bloc) {
-    updateCardBloc(card, found.bloc);
-  }
-  refreshLoad(card);
+  const bloc = (found && found.bloc) || card.dataset.bloc;
+  updateCardBloc(card, bloc);
 }
 
 // ═══════════════════════════════════════════════════
@@ -2766,6 +3069,9 @@ function updateCardBloc(card, bloc) {
   }
 
   // Reconstruit la cellule Charge de CHAQUE sous-ligne en gardant les valeurs
+  // (appelé aussi quand le nom change ou qu'un 1RM est ajouté/retiré : la
+  // bascule auto/manuel ne dépend plus que de « cet exercice a un 1RM »)
+  const exName = card.querySelector('.ex-name-input').value;
   card.querySelectorAll('.sub-row').forEach(row => {
     const cells = row.querySelectorAll('.sub-cell');
     const cell  = cells[4];                 // 0:Sets 1:Reps 2:RPE 3:% 4:Charge
@@ -2777,8 +3083,11 @@ function updateCardBloc(card, bloc) {
       unit:   oldUnit  ? oldUnit.value  : 'kg',
       chargeUserEdited: oldInput ? !!oldInput.dataset.userEdited : false
     };
-    cell.innerHTML = chargeCellHTML(bloc, cur, cur.charge);
+    cell.innerHTML = chargeCellHTML(bloc, cur, cur.charge, exName);
   });
+
+  // Le bloc module le repos suggéré : on recalcule ceux qui ne sont pas fixés
+  card.querySelectorAll('.sub-row').forEach(row => refreshRowRest(row));
 
   refreshLoad(card);
 }
@@ -2842,7 +3151,9 @@ function selectExFromBrowser(name, bloc) {
   updateCardBloc(pendingBrowserCard, bloc);
   refreshLoad(pendingBrowserCard);
   closeBrowser();
+  ensurePR(name);
   refreshPRSection();
+  scheduleAutosave();
 }
 function filterBrowser(q) {
   const body = document.getElementById('browser-body');
@@ -2868,25 +3179,14 @@ function opts(min, max, sel) {
   return o;
 }
 // Repos : de 15 s en 15 s jusqu'à 5 min, puis paliers plus larges
+// « — » = recalculer (suggestion) ; « Aucun » = pas de repos, verrouillé ;
+// puis le menu : 15 s → 5 min par pas de 15 s, puis 6, 7, 8 et 10 min.
 function restOpts(sel) {
   let o = '<option value="">—</option>';
-  for (let sec = 15; sec <= 300; sec += 15) {
-    const m = Math.floor(sec/60), r = sec % 60;
-    const lbl = m === 0 ? sec+'s' : (r === 0 ? m+':00' : m+':'+String(r).padStart(2,'0'));
-    o += `<option value="${lbl}"${String(sel)===lbl?' selected':''}>${lbl}</option>`;
-  }
-  ['6:00','7:00','8:00','10:00'].forEach(v => {
-    o += `<option value="${v}"${String(sel)===v?' selected':''}>${v}</option>`;
+  o += `<option value="none"${String(sel)==='none'?' selected':''}>Aucun</option>`;
+  REST_MENU.forEach(m => {
+    o += `<option value="${m.label}"${String(sel)===m.label?' selected':''}>${m.label}</option>`;
   });
-  return o;
-}
-
-function pctOpts(sel) {
-  let o = '<option value="">—</option>';
-  for (let p=30;p<=100;p+=2.5){
-    const v=p%1===0?String(p):p.toFixed(1);
-    o+=`<option value="${v}"${String(sel)===String(v)?' selected':''}>${v}%</option>`;
-  }
   return o;
 }
 
@@ -2946,14 +3246,23 @@ function scheduleAutosave() {
   autosaveTimer = setTimeout(doAutosave, 600);
 }
 
+let autosaveFailed = false;   // évite de répéter l'alerte à chaque frappe
+
 function doAutosave() {
   if (!autosaveReady || !hasSections()) return;
   try {
     saveState(); syncToSection();
     localStorage.setItem(LS_KEY, JSON.stringify(buildSnapshot()));
     flashSaved();
+    autosaveFailed = false;
   } catch (e) {
     console.warn('Sauvegarde impossible', e);
+    // Stockage plein, navigation privée, quota… : le programme n'est PLUS
+    // enregistré sur cet appareil. On le signale une fois, sans spammer.
+    if (!autosaveFailed) {
+      autosaveFailed = true;
+      showToast('⚠ Sauvegarde impossible — exporte ton JSON');
+    }
   }
 }
 
@@ -3166,7 +3475,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
     deep:    '7B2028',
     // Plus de code couleur par bloc : un seul rouge bordeaux, plus vif que
     // l'accent existant, pour tous les blocs (livrés ou perso).
-    blocFlash: 'E63A54',
+    blocFlash: 'C25562',
   };
 
   const fill = h => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+h } });
@@ -3239,7 +3548,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
       } else {
         exs.forEach((ex, ei) => {
           const b      = ex.bloc||'muscu';
-          const isAuto = b==='sbd'||b==='halte';
+          const isAuto = getPR(ex.exercise) > 0;
           const bClr   = C.blocFlash;
           const isLastEx = ei===exs.length-1;
           const subs   = (ex.subRows&&ex.subRows.length)
@@ -3266,7 +3575,7 @@ async function generateExcelWithWeeks(selectedWeeks) {
             ec.border = bdr(C.border);
 
             // Cols B-F — fond surface, texte clair, PAS de couleur bloc
-            [sr.sets||'',sr.reps||'',sr.rpe||'',sr.pct?sr.pct+'%':''].forEach((v,i) => {
+            [sr.sets||'',sr.reps||'',sr.rpe?String(sr.rpe).replace('.',','):'',sr.pct?sr.pct+'%':''].forEach((v,i) => {
               const c = ws.getCell(r,i+2);
               c.value = v;
               c.fill  = fill(C.surface);
@@ -3377,7 +3686,7 @@ async function generatePDF() {
   // ═══════════════════════════════════════════════════════════════
   // Plus de code couleur par bloc : un seul rouge bordeaux pour tous
   // (liseré des exercices), livrés ou perso.
-  const BLOC_SPINE_RGB = [230, 58, 84];
+  const BLOC_SPINE_RGB = [194, 85, 98];
 
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const PW = 210, PH = 297;
@@ -3623,12 +3932,19 @@ async function generatePDF() {
       doc.setFillColor(45,45,45);
       doc.rect(ML, y, CW, tableHeadH, 'F');
       doc.setFont('helvetica','bold');
-      doc.setFontSize(f.hdr);
       doc.setTextColor(216,216,216);
       let cx = ML;
       HEADERS.forEach((h, i) => {
         const w = COLW[i];
         const left = i === 0 || i === 7;
+        // Colonnes étroites (SÉRIES, RPE…) : on réduit la police pour que
+        // les en-têtes ne se chevauchent jamais, comme pour les cellules.
+        let fs = f.hdr;
+        doc.setFontSize(fs);
+        while (fs > 5.5 && doc.getTextWidth(h) > w - 1) {
+          fs -= 0.3;
+          doc.setFontSize(fs);
+        }
         doc.text(h, cx + (left ? 1.6 : w * 0.5), y + tableHeadH * 0.5,
                  { align: left ? 'left' : 'center', baseline:'middle' });
         cx += w;
@@ -3652,7 +3968,7 @@ async function generatePDF() {
     function drawExercise(ex, m) {
       const top    = y;
       const h      = m.height;
-      const isAuto = ex.bloc === 'sbd' || ex.bloc === 'halte';
+      const isAuto = getPR(ex.exercise) > 0;
 
       // Cellule exercice : fond gris + liseré coloré du bloc
       doc.setFillColor(245,245,245);
@@ -3693,7 +4009,7 @@ async function generatePDF() {
         else if (isAuto)                  charge = computeAutoLoad({ exercise: ex.exercise, pct: sr.pct, bloc: ex.bloc });
         else                              charge = chVal ? chVal + ' ' + unit : '—';
 
-        const vals = ['', sr.sets || '', sr.reps || '', sr.rpe || '',
+        const vals = ['', sr.sets || '', sr.reps || '', sr.rpe ? String(sr.rpe).replace('.', ',') : '',
                       sr.pct ? sr.pct + '%' : '', charge, sr.rest || '', ''];
         let cx = ML;
         vals.forEach((v, ci) => {

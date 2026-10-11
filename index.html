@@ -1402,6 +1402,7 @@ function switchWeek(i){
   activeWeek = i;
   if (activeDay >= nDaysOf(activeWeek)) activeDay = Math.max(0, nDaysOf(activeWeek) - 1);
   renderTabs(); renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1605,6 +1606,7 @@ function switchDay(d) {
   saveState();
   activeDay = d;
   renderDayTabs(); renderDays();
+  doAutosave();
 }
 
 function openWeekModal() {

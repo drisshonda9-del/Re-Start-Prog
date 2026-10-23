@@ -678,7 +678,7 @@ input.inp-pct[data-user-edited] { color: var(--accent); font-weight: 600; }
         Utilise l'export JSON pour le sauvegarder ailleurs ou le transférer.
       </div>
       <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px">
-        Le % se déduit de tes reps et de ton RPE (table RTS). Un % saisi à la main reste verrouillé
+        Le % se déduit de tes reps et de ton RPE (table smartandstrong validée par le coach). Un % saisi à la main reste verrouillé
         jusqu'à ce que tu vides le champ.
       </div>
       <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px">
@@ -2025,7 +2025,7 @@ function computeAutoLoad(ex) {
 }
 
 // ═══════════════════════════════════════════════════
-//  % DÉDUIT DE REPS + RPE  (table RTS, pas de 0,5 RPE)
+//  % DÉDUIT DE REPS + RPE  (table smartandstrong, RPE par paliers de 0,5)
 // ═══════════════════════════════════════════════════
 // Copie de lib/rpe-table.ts (plateforme) — à garder identique. Millièmes du
 // 1RM indexés par n = reps + (10 − RPE) ; l'index 0 est inutilisé. Un RPE non
